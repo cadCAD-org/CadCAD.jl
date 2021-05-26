@@ -1,21 +1,34 @@
 module Simulation
 
 # Configure
+import Configure
 
+function run_experiment()
+    Configure.config_state()
 
-function main()
-    history = Vector{State}()
+    for simulation_name in keys(Configure.exp_config["simulations"])
+        simulation_run(simulation_name)
+    end
+end
 
-    initial_state = State(1, 1, 0.5, 0.5)
+function simulation_run(simulation_name::String)
+    trajectory = Vector{State}(nothing, Configure.exp_config["simulations"][simulation_name]["timesteps"])
 
-    push!(history, initial_state)
+    # Function to initialize from the initial conditions dict?
+    initial_state = State(?)
 
-    for timestep = 1:N_STEPS
-        for (substep, substep_block) in enumerate(timestep_block)
-            for func in substep_block
-                push!(history, func(history[end], timestep=timestep, substep=substep))
+    push!(trajectory, initial_state)
+
+    for _ = 1:Configure.exp_config["simulations"][simulation_name]["n_runs"]
+        for timestep = 1:Configure.exp_config["simulations"][simulation_name]["timesteps"]
+            for (substep, substep_block) in enumerate(Configure.exp_config["simulations"][simulation_name]["pipeline"])
+                for func in substep_block
+                    push!(trajectory, func(history[end], timestep=timestep, substep=substep))
+                end
             end
         end
     end
+
+    # Save the trajectory
 
 end

@@ -18,6 +18,6 @@ function state_predator_update(state::State; timestep::Int64, substep::Int64)
 end
 
 substep_block_1 = (state_prey_update, state_predator_update)
-substep_block_2 = (state_stochastic_prey_update,)
+substep_block_2 = (state_stochastic_prey_update)
 
 pipeline = (substep_block_1, substep_block_2)

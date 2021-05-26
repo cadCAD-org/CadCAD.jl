@@ -13,7 +13,7 @@ predator_population = "Float64"
 
 [simulations]
 [simulations.alpha]
-enabled = true
+enabled = false
 literal_init = true
 initial_conditions = { prey_population = 79.5, predator_population = 72.0 }
 params = { prey_birth_rate = 1.0, predator_birth_rate = 0.01, predator_death_const = 1.0, prey_death_const = 0.03, dt = 0.1 }

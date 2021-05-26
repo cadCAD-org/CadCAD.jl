@@ -1,7 +1,7 @@
 module MetaEngine
 
-macro make_state(schema::String)
-    fields_list = split(schema) 
+macro state_factory(schema::String)
+    fields = map(x -> Meta.parse(x), split(schema))
     return quote
         struct State
             $(fields...)
@@ -10,11 +10,6 @@ macro make_state(schema::String)
             end
         end
     end
-end
-
-function state_impl(expr::String)
-    dump(expr)
-    expr
 end
 
 end
