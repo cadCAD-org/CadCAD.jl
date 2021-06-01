@@ -1,5 +1,3 @@
-# My simulation's TOML
-
 title = "Prey Predator Example"
 
 [author]
@@ -7,31 +5,25 @@ name = "Emanuel Lima"
 email = "emanuel@block.science"
 version = 0.1
 
-[state]
-prey_population = "Float64"
-predator_population = "Float64"
-
 [simulations]
 [simulations.alpha]
-enabled = false
-literal_init = true
-initial_conditions = { prey_population = 79.5, predator_population = 72.0 }
-params = { prey_birth_rate = 1.0, predator_birth_rate = 0.01, predator_death_const = 1.0, prey_death_const = 0.03, dt = 0.1 }
+enabled = true
+initial_conditions = "initial_conditions_alpha"
+params = "parameters_alpha"
 n_runs = 5
 timesteps = 200
 pipeline = [
-    { predator_births = "p_predator_births", prey_births = "p_prey_births", predator_deaths = "p_predator_deaths", prey_deaths = "p_prey_deaths" },
-    { prey_population = "s_prey_population", predator_population = "s_predator_population" },
+    ["policy_prey_update", "policy_predator_update"],
+    ["state_prey_update", "state_predator_update"],
 ]
 
 [simulations.beta]
-enabled = true
-literal_init = true
-initial_conditions = { prey_population = 97.2, predator_population = 17.6 }
-params = { prey_birth_rate = 0.9, predator_birth_rate = 0.05, predator_death_const = 1.1, prey_death_const = 0.07, dt = 0.2 }
+enabled = false
+initial_conditions = "initial_conditions_beta"
+params = "parameters_beta"
 n_runs = 5
 timesteps = 200
 pipeline = [
-    { predator_births = "p_predator_births", prey_births = "p_prey_births", predator_deaths = "p_predator_deaths", prey_deaths = "p_prey_deaths" },
-    { prey_population = "s_prey_population", predator_population = "s_predator_population" },
+    ["policy_prey_update", "policy_predator_update"],
+    ["state_prey_update", "state_predator_update"],
 ]
