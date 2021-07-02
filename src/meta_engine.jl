@@ -18,10 +18,10 @@ macro state_factory(schema::String)
     end
 end
 
-function config_state(initial_conditions::Dict{String, Any})
+function config_state(initial_conditions::NamedTuple)
     state_signature = ""
 
-    for (variable, value) in initial_conditions
+    for (variable, value) in pairs(initial_conditions)
         type = typeof(value)
         state_signature *= "$variable::$type "
     end
