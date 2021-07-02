@@ -1,14 +1,18 @@
-module Simulation
+module cadCAD
 
-import MetaEngine, TOML
-using CSV, DataFrames, StructArrays, ThreadPools, Base.Threads
+export run_experiment
+
+include("meta_engine.jl")
+
+import TOML
+using CSV, DataFrames, StructArrays, Base.Threads
 
 # cadCAD.jl starts here
 function run_experiment(config_path::String)
     n_threads = nthreads()
     println("Running cadCAD.jl with $n_threads thread(s).")
 
-    const exp_config = TOML.tryparsefile(config_path)
+    exp_config = TOML.tryparsefile(config_path)
 
     # I need any simulation_name
     # To get any initial_conditions dict in order to config_state()

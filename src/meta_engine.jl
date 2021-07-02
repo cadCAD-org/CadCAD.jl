@@ -1,5 +1,3 @@
-module MetaEngine
-
 macro state_factory(schema::String)
     fields = map(x -> Meta.parse(x), split(schema))
 
@@ -26,7 +24,5 @@ function config_state(initial_conditions::NamedTuple)
         state_signature *= "$variable::$type "
     end
 
-    @MetaEngine.state_factory(state_signature)
-end
-
+    state_factory(state_signature)
 end
