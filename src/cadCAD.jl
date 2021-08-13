@@ -41,57 +41,124 @@ function run_simulation(simulation_name::String)
     trajectory = StructArray{State}(undef, 0)
     final_data = Vector{DataFrame}(undef, exp_config["simulations"][simulation_name]["n_runs"])
 
-    initial_state = make_initial_state(simulation_name)
+    # create the configurations from system model
 
-    push!(trajectory, initial_state)
+    # set of configurations ()
+    state_params_set
+    params_set
 
-    for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
-        for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
-            for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
-                for (substep, substep_block) in enumerate(subpipeline)
+    # config tuple of params 
 
-                    # Policies application
-                    # Lock the signal_vec?
-                    # Use @spawn?
-                    signal_vec = Vector{NamedTuple}(undef, 0)
+    if exp_config["simulations"][simulation_name]["state_sweep"]
+        for state_params in state_params_set
+            # Create new state here
+            # New function to create state from params
 
-                    if nthreads() > 1
-                        @threads for policy_str in substep_block[1]
-                            policy = Symbol(policy_str)
-                            push!(signal_vec, policy(trajectory[end]))
-                        end
-                    else
-                        for policy_str in substep_block[1]
-                            policy = Symbol(policy_str)
-                            push!(signal_vec, policy(trajectory[end]))
+            # Extract main loop into new function
+            for params in params_set
+                for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
+                    for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
+                        for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
+                            for (substep, substep_block) in enumerate(subpipeline)
+
+                                # Policies application
+                                # Lock the signal_vec?
+                                # Use @spawn?
+                                signal_vec = Vector{NamedTuple}(undef, 0)
+
+                                if nthreads() > 1
+                                    @threads for policy_str in substep_block[1]
+                                        policy = Symbol(policy_str)
+                                        push!(signal_vec, policy(trajectory[end], params))
+                                    end
+                                else
+                                    for policy_str in substep_block[1]
+                                        policy = Symbol(policy_str)
+                                        push!(signal_vec, policy(trajectory[end], params))
+                                    end
+                                end
+
+                                # Signal production (aggregation)
+                                final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
+
+                                # SUFs application
+                                # Lock the trajectory?
+                                # Use @spawn?
+                                if nthreads() > 1
+                                    @threads for suf_str in substep_block[2]
+                                        suf = Symbol(suf_str)
+                                        new_state = suf(trajectory[end], timestep, substep, final_signal, params)
+                                        push!(trajectory, new_state)
+                                    end
+                                else
+                                    for suf_str in substep_block[2]
+                                        suf = Symbol(suf_str)
+                                        new_state = suf(trajectory[end], timestep, substep, final_signal, params)
+                                        push!(trajectory, new_state)
+                                    end
+                                end
+                            end
                         end
                     end
-
-                    # Signal production (aggregation)
-                    final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
-
-                    # SUFs application
-                    # Lock the trajectory?
-                    # Use @spawn?
-                    if nthreads() > 1
-                        @threads for suf_str in substep_block[2]
-                            suf = Symbol(suf_str)
-                            new_state = suf(trajectory[end], timestep, substep, final_signal)
-                            push!(trajectory, new_state)
-                        end
-                    else
-                        for suf_str in substep_block[2]
-                            suf = Symbol(suf_str)
-                            new_state = suf(trajectory[end], timestep, substep, final_signal)
-                            push!(trajectory, new_state)
-                        end
-                    end
+                    final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
+                    # CSV.write("results_$(simulation_name)_run$(n_run).csv", data)
                 end
             end
         end
+    else
+        initial_state = make_initial_state(simulation_name) 
+        push!(trajectory, initial_state)
 
-        final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
-        CSV.write("results_$(simulation_name)_run$(n_run).csv", data)
+        # Extract main loop into new function
+        for params in params_set
+            for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
+                for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
+                    for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
+                        for (substep, substep_block) in enumerate(subpipeline)
+
+                            # Policies application
+                            # Lock the signal_vec?
+                            # Use @spawn?
+                            signal_vec = Vector{NamedTuple}(undef, 0)
+
+                            if nthreads() > 1
+                                @threads for policy_str in substep_block[1]
+                                    policy = Symbol(policy_str)
+                                    push!(signal_vec, policy(trajectory[end], params))
+                                end
+                            else
+                                for policy_str in substep_block[1]
+                                    policy = Symbol(policy_str)
+                                    push!(signal_vec, policy(trajectory[end], params))
+                                end
+                            end
+
+                            # Signal production (aggregation)
+                            final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
+
+                            # SUFs application
+                            # Lock the trajectory?
+                            # Use @spawn?
+                            if nthreads() > 1
+                                @threads for suf_str in substep_block[2]
+                                    suf = Symbol(suf_str)
+                                    new_state = suf(trajectory[end], timestep, substep, final_signal, params)
+                                    push!(trajectory, new_state)
+                                end
+                            else
+                                for suf_str in substep_block[2]
+                                    suf = Symbol(suf_str)
+                                    new_state = suf(trajectory[end], timestep, substep, final_signal, params)
+                                    push!(trajectory, new_state)
+                                end
+                            end
+                        end
+                    end
+                end
+                final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
+                # CSV.write("results_$(simulation_name)_run$(n_run).csv", data)
+            end
+        end
     end
 end
 
