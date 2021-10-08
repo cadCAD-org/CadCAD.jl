@@ -4,7 +4,7 @@ export run_experiment, config_experiment
 
 include("meta_engine.jl")
 
-import TOML
+import TOML, Base.Iterators
 using CSV, DataFrames, StructArrays, Base.Threads
 
 # cadCAD.jl starts here
@@ -24,7 +24,9 @@ function config_experiment(config_path::String)
 end
 
 # Simulation starts here
-function run_experiment()
+function run_experiment(config_path::String)
+    config_experiment(config_path)
+
     n_threads = nthreads()
     println("Running cadCAD.jl with $n_threads thread(s).")
 
@@ -38,87 +40,47 @@ function run_experiment()
 end
 
 function run_simulation(simulation_name::String)
-    trajectory = StructArray{State}(undef, 0)
+    trajectory = StructArray{State}(undef, 0) # consider declaring with full size
     final_data = Vector{DataFrame}(undef, exp_config["simulations"][simulation_name]["n_runs"])
 
     # create the configurations from system model
 
-    # set of configurations ()
-    state_params_set
-    params_set
+    # sets of configurations
+    params = eval(Symbol(exp_config["simulations"][simulation_name]["params"]))
+    init_conditions = eval(Symbol(exp_config["simulations"][simulation_name]["initial_conditions"]))
 
-    # config tuple of params 
+    sweep_strategy = exp_config["simulations"][simulation_name]["sweep"]
 
-    if exp_config["simulations"][simulation_name]["state_sweep"]
-        for state_params in state_params_set
-            # Create new state here
-            # New function to create state from params
-
-            # Extract main loop into new function
-            for params in params_set
-                for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
-                    for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
-                        for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
-                            for (substep, substep_block) in enumerate(subpipeline)
-
-                                # Policies application
-                                # Lock the signal_vec?
-                                # Use @spawn?
-                                signal_vec = Vector{NamedTuple}(undef, 0)
-
-                                if nthreads() > 1
-                                    @threads for policy_str in substep_block[1]
-                                        policy = Symbol(policy_str)
-                                        push!(signal_vec, policy(trajectory[end], params))
-                                    end
-                                else
-                                    for policy_str in substep_block[1]
-                                        policy = Symbol(policy_str)
-                                        push!(signal_vec, policy(trajectory[end], params))
-                                    end
-                                end
-
-                                # Signal production (aggregation)
-                                final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
-
-                                # SUFs application
-                                # Lock the trajectory?
-                                # Use @spawn?
-                                if nthreads() > 1
-                                    @threads for suf_str in substep_block[2]
-                                        suf = Symbol(suf_str)
-                                        new_state = suf(trajectory[end], timestep, substep, final_signal, params)
-                                        push!(trajectory, new_state)
-                                    end
-                                else
-                                    for suf_str in substep_block[2]
-                                        suf = Symbol(suf_str)
-                                        new_state = suf(trajectory[end], timestep, substep, final_signal, params)
-                                        push!(trajectory, new_state)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                    final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
-                    # CSV.write("results_$(simulation_name)_run$(n_run).csv", data)
-                end
-            end
-        end
+    if max_param_length(params) > 1 && sweep_strategy == "cartesian"
+        params_set = Iterators.product(params...)
+    elseif max_param_length(params) > 1
+        params_set = generate_job(exp_matrix(params))
     else
-        initial_state = make_initial_state(simulation_name) 
-        push!(trajectory, initial_state)
+        params_set = (params)
+    end
 
-        # Extract main loop into new function
+    if max_param_length(init_conditions) > 1 && sweep_strategy == "cartesian"
+        state_set = Iterators.product(init_conditions...)
+    elseif max_param_length(init_conditions) > 1
+        state_set = generate_job(exp_matrix(init_conditions))
+    else
+        state_set = (init_conditions)
+    end
+
+    for state in state_set
+        # Create new state here
+        # make_state()
+        # New function to create state from params
+
         for params in params_set
             for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
                 for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
                     for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
                         for (substep, substep_block) in enumerate(subpipeline)
 
-                            # Policies application
-                            # Lock the signal_vec?
-                            # Use @spawn?
+                                    # Policies application
+                                    # Lock the signal_vec?
+                                    # Use @spawn?
                             signal_vec = Vector{NamedTuple}(undef, 0)
 
                             if nthreads() > 1
@@ -133,12 +95,12 @@ function run_simulation(simulation_name::String)
                                 end
                             end
 
-                            # Signal production (aggregation)
+                                    # Signal production (aggregation)
                             final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
 
-                            # SUFs application
-                            # Lock the trajectory?
-                            # Use @spawn?
+                                    # SUFs application
+                                    # Lock the trajectory?
+                                    # Use @spawn?
                             if nthreads() > 1
                                 @threads for suf_str in substep_block[2]
                                     suf = Symbol(suf_str)
@@ -160,29 +122,57 @@ function run_simulation(simulation_name::String)
             end
         end
     end
-end
 
-function make_initial_state(simulation_name::String)
-    init_state = eval(Symbol(exp_config["simulations"][simulation_name]["initial_conditions"]))
-    state_tuple = (;(Symbol(variable) => value for (variable, value) in init_state)...)
+    function make_initial_state(simulation_name::String)
+        init_state = eval(Symbol(exp_config["simulations"][simulation_name]["initial_conditions"]))
+        state_tuple = (;(Symbol(variable) => value for (variable, value) in init_state)...)
 
-    return State(; state_tuple...)
-end
+        return State(; state_tuple...)
+    end
 
-function aggregate_signal(agg_func_str::String, signal_vec::Vector{NamedTuple})
-    signal_dict = Dict()
+    function aggregate_signal(agg_func_str::String, signal_vec::Vector{NamedTuple})
+        signal_dict = Dict()
     
-    if isempty(agg_func_str)
-        agg_func = :+
-    else
-        agg_func = Symbol(agg_func_str)
+        if isempty(agg_func_str)
+            agg_func = :+
+        else
+            agg_func = Symbol(agg_func_str)
+        end
+
+        for signal in signal_vec
+            mergewith!(agg_func, signal_dict, Dict(pairs(signal)))
+        end
+
+        return (; zip(keys(signal_dict), values(signal_dict))...)
     end
 
-    for signal in signal_vec
-        mergewith!(agg_func, signal_dict, Dict(pairs(signal)))
+    function exp_matrix(params::NamedTuple)
+        len = max_param_length(params::NamedTuple)
+        matrix = Matrix{Any}(nothing, length(params), len)
+        for (index, param) in enumerate(params)
+            if length(param) < len
+                tmp_array = fill(last(param), len - length(param))
+                final_array = vcat(param, tmp_array)
+                matrix[index, :] = final_array
+            else
+                matrix[index, :] = collect(param)
+            end
+        end
+        return matrix
     end
 
-    return (; zip(keys(signal_dict), values(signal_dict))...)
-end
+    function max_param_length(params::NamedTuple)
+        len = 0
+        for param in params
+            if length(param) > len
+                len = length(param)
+            end
+        end
+        return len
+    end
+
+    function generate_job(experiment_matrix::Matrix)
+        return (view(experiment_matrix, :, i) for i in 1:size(experiment_matrix, 2))
+    end
 
 end
