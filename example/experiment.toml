@@ -12,13 +12,13 @@ sweep = ""
 enabled = true
 initial_conditions = "initial_conditions_alpha"
 params = "parameters_alpha"
-n_runs = 5
-timesteps = 200
+n_runs = 1
+timesteps = 5
 pipeline = [
     [
         [
-            "policy_A",
-            "policy_B",
+            "prey_policy",
+            "predator_policy",
         ],
         [
             "state_prey_update",
@@ -38,8 +38,8 @@ timesteps = 200
 pipeline = [
     [
         [
-            "policy_A",
-            "policy_B",
+            "prey_policy",
+            "predator_policy",
         ],
         [
             "state_prey_update",

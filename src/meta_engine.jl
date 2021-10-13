@@ -1,22 +1,25 @@
-macro state_factory(schema::String)
+export generate_state_signature, @state_factory
+
+macro state_factory(signature::Union{Symbol,String})
+    schema = eval(signature)
     fields = map(x -> Meta.parse(x), split(schema))
 
     return quote
         struct State
             $(fields...)
-            timestep::UInt64
-            substep::UInt64
+            timestep::Int64
+            substep::Int64
 
-            function State($(fields...), timestep::UInt64, substep::UInt64)
-                new($(fields...), timestep::UInt64, substep::UInt64)
+            function State($(fields...), timestep::Int64, substep::Int64)
+                new($(fields...), timestep::Int64, substep::Int64)
             end
 
-            State(;$(fields...), timestep::UInt64=1, substep::UInt64=1) = State($(fields...), timestep::UInt64, substep::UInt64)
+            State(;$(fields...), timestep::Int64=1, substep::Int64=1) = State($(fields...), timestep::Int64, substep::Int64)
         end
     end
 end
 
-function config_state(initial_conditions::NamedTuple)
+function generate_state_signature(initial_conditions::NamedTuple)
     state_signature = ""
 
     for (variable, value) in pairs(initial_conditions)
@@ -24,5 +27,5 @@ function config_state(initial_conditions::NamedTuple)
         state_signature *= "$variable::$type "
     end
 
-    state_factory(state_signature)
+    return state_signature
 end

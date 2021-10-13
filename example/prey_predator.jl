@@ -1,13 +1,17 @@
-using Distributions
+using Distributions, cadCAD
 
 # Configuring the simulations
-# Invariant: ALL states will have: timestep::UInt64 and substep::UInt64
+# Invariant: ALL states will have: timestep::Int64 and substep::Int64
 # Invariant: ALL initial conditions must have the same type signature
-initial_conditions_alpha = (prey_population = 100.0, 
+initial_conditions_alpha = (prey_population = [100.0, 5.0], 
                             predator_population = 15.0)
 
 initial_conditions_beta = (prey_population = 150.0, 
                            predator_population = 10.0)
+
+state_signature = generate_state_signature(initial_conditions_alpha)
+@state_factory "prey_population::Float64 predator_population::Float64"
+#= dump(State) =#
 
 parameters_alpha = (prey_birth_rate = 1.0, 
                     predator_birth_rate = 0.01, 
@@ -47,6 +51,4 @@ function state_predator_update(state::State; timestep::Int64, substep::Int64, pa
     return State(timestep, substep, state.prey_population, updated_predator_pop)
 end
 
-# Call the engine config
-
-# Call the simulation run
+run_experiment("experiment.toml")
