@@ -1,8 +1,16 @@
-export generate_state_signature, @state_factory
+export generate_state_type, State
 
-macro state_factory(signature::Union{Symbol,String})
-    schema = eval(signature)
-    fields = map(x -> Meta.parse(x), split(schema))
+function generate_state_type(initial_conditions::NamedTuple)
+    eval(state_factory(initial_conditions))
+    println("The following State type was generated and is available in the current scope:")
+    dump(State)
+    println()
+end
+
+function state_factory(initial_conditions::NamedTuple)
+    state_signature = generate_state_signature(initial_conditions)
+
+    fields = map(x -> Meta.parse(x), split(state_signature))
 
     return quote
         struct State

@@ -1,18 +1,24 @@
 using Distributions, cadCAD
 
-# Configuring the simulations
-# Invariant: ALL states will have: timestep::Int64 and substep::Int64
-# Invariant: ALL initial conditions must have the same type signature
-initial_conditions_alpha = (prey_population = [100.0, 5.0], 
+#= 
+Configuring the simulations.
+Invariant: ALL states will have: timestep::Int64 and substep::Int64.
+Invariant: ALL initial conditions must have the same type signature. =#
+initial_conditions_alpha = (prey_population = 100.0, 
                             predator_population = 15.0)
 
 initial_conditions_beta = (prey_population = 150.0, 
                            predator_population = 10.0)
 
-state_signature = generate_state_signature(initial_conditions_alpha)
-@state_factory "prey_population::Float64 predator_population::Float64"
-#= dump(State) =#
+#= 
+The engine will generate a type State based on the NamedTuple
+declared as initial_conditions on the TOML.
+The type State will never change for the duration of the simulation.
+So if a different State, with different type signatures is necessary,
+the user has to create another system model. =#
+generate_state_type(initial_conditions_alpha)
 
+# Definition of parameters
 parameters_alpha = (prey_birth_rate = 1.0, 
                     predator_birth_rate = 0.01, 
                     predator_death_rate = 1.0, 
@@ -51,4 +57,8 @@ function state_predator_update(state::State; timestep::Int64, substep::Int64, pa
     return State(timestep, substep, state.prey_population, updated_predator_pop)
 end
 
-run_experiment("experiment.toml")
+#= 
+This is the second necessary step.
+Start cadCAD.jl based on TOML configuration.
+The @__FILE__ argument is just a necessary boilerplate. =#
+run_experiment("experiment.toml", @__FILE__)

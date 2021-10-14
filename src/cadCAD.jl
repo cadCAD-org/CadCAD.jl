@@ -8,15 +8,31 @@ import TOML, Base.Iterators
 using CSV, DataFrames, StructArrays, Base.Threads
 
 # Point of entry
-function run_experiment(config_path::String)
-    println("Configuring experiment based on TOML file...")
+function run_experiment(config_path::String, sys_model_path::String)
+    println(raw"""
+                          _  ____    _    ____    _ _ 
+             ___ __ _  __| |/ ___|  / \  |  _ \  (_) |
+            / __/ _` |/ _` | |     / _ \ | | | | | | |
+           | (_| (_| | (_| | |___ / ___ \| |_| | | | |
+            \___\__,_|\__,_|\____/_/   \_\____(_)/ |_|
+                                               |__/   
+          """)
+
     global exp_config = TOML.tryparsefile(config_path)
+
+    println("Starting experiment ", exp_config["title"])
+
+    println("Using $sys_model_path as system model.")
+    include(filter_expr, sys_model_path)
+
+    println("Configuring experiment based on $config_path.")
 
     n_threads = nthreads()
     println("Running cadCAD.jl with $n_threads thread(s).")
 
     for simulation_name in keys(exp_config["simulations"])
         if exp_config["simulations"][simulation_name]["enabled"]
+            println("Running $simulation_name...")
             run_simulation(simulation_name)
         else
             println("Skipping $simulation_name because it was disabled...")
@@ -39,6 +55,8 @@ function run_simulation(simulation_name::String)
         params_set = (params)
     end
 
+    println("The parameter set used is:\n $params_set")
+
     if max_param_length(init_conditions) > 1 && sweep_strategy == "cartesian"
         state_set = Iterators.product(init_conditions...)
     elseif max_param_length(init_conditions) > 1
@@ -47,9 +65,7 @@ function run_simulation(simulation_name::String)
         state_set = (init_conditions)
     end
 
-    config_state(state_set[1])
-    println("Created state:")
-    dump(State)
+    println("The state set used is:\n $state_set")
 
     for state in state_set
         init_state = State(; state...)
@@ -152,6 +168,12 @@ end
 
 function generate_job(experiment_matrix::Matrix)
     return (view(experiment_matrix, :, i) for i in 1:size(experiment_matrix, 2))
+end
+
+function filter_expr(expr::Expr)
+    if expr.head != :call
+        return expr
+    end
 end
 
 end
