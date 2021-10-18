@@ -7,45 +7,28 @@ version = 0.1
 
 [simulations]
 [simulations.alpha]
+enabled = true
 aggregation = ""
 sweep = ""
-enabled = true
+output = ["table"]
 initial_conditions = "initial_conditions_alpha"
 params = "parameters_alpha"
 n_runs = 1
 timesteps = 5
-pipeline = [
-    [
-        [
-            "prey_policy",
-            "predator_policy",
-        ],
-        [
-            "state_prey_update",
-            "state_predator_update",
-        ],
-    ],
-]
+pipeline.policies = ["prey_policy", "predator_policy"]
+pipeline.sufs = ["state_prey_update", "state_predator_update"]
+
 
 [simulations.beta]
-aggregation = ""
 enabled = false
+aggregation = ""
 sweep = ""
+output = ["table", "csv", "json"]
 initial_conditions = "initial_conditions_beta"
 params = "parameters_beta"
 n_runs = 5
 timesteps = 200
-pipeline = [
-    [
-        [
-            "prey_policy",
-            "predator_policy",
-        ],
-        [
-            "state_prey_update",
-            "state_predator_update",
-        ],
-    ],
-]
+pipeline.policies = ["prey_policy", "predator_policy"]
+pipeline.sufs = ["state_prey_update", "state_predator_update"]
 # Invariant: All policies come in the same list before the SUFs
 # Default aggregation is concatenation

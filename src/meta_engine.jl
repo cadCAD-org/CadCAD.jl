@@ -2,9 +2,6 @@ export generate_state_type, State
 
 function generate_state_type(initial_conditions::NamedTuple)
     eval(state_factory(initial_conditions))
-    println("The following State type was generated and is available in the current scope:")
-    dump(State)
-    println()
 end
 
 function state_factory(initial_conditions::NamedTuple)

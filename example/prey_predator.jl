@@ -1,4 +1,5 @@
-using Distributions, cadCAD
+using Distributions
+using cadCAD
 
 #= 
 Configuring the simulations.
@@ -32,29 +33,29 @@ parameters_beta = (prey_birth_rate = 0.9,
                    dt = 0.2)
 
 # Policies
-function prey_policy(state::State; params::NamedTuple)
+function prey_policy(; state::State, params::NamedTuple)
     updated_prey_pop = state.prey_population * rand(Uniform(0.9, 1.1))
-    return (signal_prey = updated_prey_pop)
+    return (signal_prey = updated_prey_pop,)
 end
 
-function predator_policy(state::State; params::NamedTuple)
+function predator_policy(; state::State, params::NamedTuple)
     updated_predator_pop = state.predator_population * rand(Uniform(0.9, 1.1))
-    return (signal_predator = updated_predator_pop)
+    return (signal_predator = updated_predator_pop,)
 end
 
 # State Update Functions
-function state_prey_update(state::State; timestep::Int64, substep::Int64, params::NamedTuple, signal::Union{NamedTuple,State})
+function state_prey_update(; state::State, timestep::Int64, substep::Int64, params::NamedTuple, signal::Union{NamedTuple,State})
     prey_change = (params["prey_birth_rate"] * state.prey_population) - (params["prey_death_rate"] * state.prey_population * state.predator_population)
-    prey_pop_on_dt = state.prey_population + (prey_change * params["dt"])
+    prey_pop_on_dt = state.prey_population + (prey_change * params["dt"]) + signal.signal_prey
     updated_prey_pop = prey_pop_on_dt > 0.0 ? prey_pop_on_dt : 0.0
-    return State(timestep, substep, updated_prey_pop, state.predator_population)
+    return State(; prey_population=updated_prey_pop, predator_population=state.predator_population, timestep=timestep, substep=substep)
 end
 
-function state_predator_update(state::State; timestep::Int64, substep::Int64, params::NamedTuple, signal::Union{NamedTuple,State})
+function state_predator_update(; state::State, timestep::Int64, substep::Int64, params::NamedTuple, signal::Union{NamedTuple,State})
     predator_change = (params["predator_birth_rate"] * state.prey_population * state.predator_population) - (params["predator_death_rate"] * state.predator_population)
-    predator_pop_on_dt = state.predator_population + (predator_change * params["dt"])
+    predator_pop_on_dt = state.predator_population + (predator_change * params["dt"]) + signal.signal_predator
     updated_predator_pop = predator_pop_on_dt > 0.0 ? predator_pop_on_dt : 0.0
-    return State(timestep, substep, state.prey_population, updated_predator_pop)
+    return State(; prey_population=state.prey_population, predator_population=updated_predator_pop, timestep=timestep, substep=substep)
 end
 
 #= 

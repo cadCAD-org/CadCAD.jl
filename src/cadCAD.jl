@@ -5,7 +5,8 @@ export run_experiment
 include("meta_engine.jl")
 
 import TOML, Base.Iterators
-using CSV, DataFrames, StructArrays, Base.Threads
+using CSV, DataFrames, StructArrays, PrettyTables, JSONTables 
+using Base.Threads, Logging
 
 # Point of entry
 function run_experiment(config_path::String, sys_model_path::String)
@@ -24,6 +25,10 @@ function run_experiment(config_path::String, sys_model_path::String)
 
     println("Using $sys_model_path as system model.")
     include(filter_expr, sys_model_path)
+
+    println("The following State type was generated and is available in the current scope:")
+    dump(State)
+    println()
 
     println("Configuring experiment based on $config_path.")
 
@@ -48,79 +53,86 @@ function run_simulation(simulation_name::String)
     sweep_strategy = exp_config["simulations"][simulation_name]["sweep"]
 
     if max_param_length(params) > 1 && sweep_strategy == "cartesian"
+        println("Using a cartesian sweep of the parameters...")
         params_set = Iterators.product(params...)
     elseif max_param_length(params) > 1
+        println("Using a simple sweep of the parameters...")
         params_set = generate_job(exp_matrix(params))
     else
-        params_set = (params)
+        println("No sweep of the parameters...")
+        params_set = [params]
     end
-
-    println("The parameter set used is:\n $params_set")
 
     if max_param_length(init_conditions) > 1 && sweep_strategy == "cartesian"
+        println("Using a cartesian sweep of the state...")
         state_set = Iterators.product(init_conditions...)
     elseif max_param_length(init_conditions) > 1
+        println("Using a simple sweep of the state...")
         state_set = generate_job(exp_matrix(init_conditions))
     else
-        state_set = (init_conditions)
+        println("No sweep of the state...")
+        state_set = [init_conditions]
     end
 
-    println("The state set used is:\n $state_set")
-
-    for state in state_set
+    for (s_order, state) in enumerate(state_set)
         init_state = State(; state...)
 
-        for params in params_set
+        for (p_order, params) in enumerate(params_set)
             final_data = Vector{DataFrame}(undef, exp_config["simulations"][simulation_name]["n_runs"])
             for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
                 trajectory = StructArray{State}(undef, 1)
                 trajectory[1] = init_state
-                for timestep in trajectory
-                    for subpipeline in exp_config["simulations"][simulation_name]["pipeline"]
-                        for (substep, substep_block) in enumerate(subpipeline)
-                            # Policies application
-                            # Lock the signal_vec?
-                            # Use @spawn?
-                            signal_vec = Vector{NamedTuple}(undef, 0)
+                for timestep in 1:exp_config["simulations"][simulation_name]["timesteps"]
+                    signal_vec = Vector{NamedTuple}(undef, 0)
+                    # Policies application
+                    # Lock the signal_vec?
+                    # Use @spawn?
+                    if nthreads() > 1 
+                        @threads for func in exp_config["simulations"][simulation_name]["pipeline"]["policies"]
+                            policy = eval(Symbol(func))
+                            push!(signal_vec, policy(; state=trajectory[end], params=params))
+                        end
+                    else
+                        for func in exp_config["simulations"][simulation_name]["pipeline"]["policies"]
+                            policy = eval(Symbol(func))
+                            dump(policy)
+                            push!(signal_vec, policy(; state=trajectory[end], params=params))
+                        end
+                    end
 
-                            if nthreads() > 1
-                                @threads for policy_str in substep_block[1]
-                                    policy = Symbol(policy_str)
-                                    push!(signal_vec, policy(trajectory[end], params))
-                                end
-                            else
-                                for policy_str in substep_block[1]
-                                    policy = Symbol(policy_str)
-                                    push!(signal_vec, policy(trajectory[end], params))
-                                end
-                            end
+                    # Signal production (aggregation)
+                    final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
 
-                            # Signal production (aggregation)
-                            final_signal = aggregate_signal(exp_config["simulations"][simulation_name]["aggregation"], signal_vec)
-
-                            # SUFs application
-                            # Lock the trajectory?
-                            # Use @spawn?
-                            if nthreads() > 1
-                                @threads for suf_str in substep_block[2]
-                                    suf = Symbol(suf_str)
-                                    new_state = suf(trajectory[end], timestep, substep, params, final_signal)
-                                    push!(trajectory, new_state)
-                                end
-                            else
-                                for suf_str in substep_block[2]
-                                    suf = Symbol(suf_str)
-                                    new_state = suf(trajectory[end], timestep, substep, params, final_signal)
-                                    push!(trajectory, new_state)
-                                end
-                            end
+                    # SUFs application
+                    # Lock the trajectory?
+                    # Use @spawn?
+                    if nthreads() > 1
+                        @threads for (substep, func) in enumerate(exp_config["simulations"][simulation_name]["pipeline"]["sufs"])
+                            suf = eval(Symbol(func))
+                            new_state = suf(; state=trajectory[end], timestep=timestep, substep=substep, params=params, signal=final_signal)
+                            push!(trajectory, new_state)
+                        end
+                    else
+                        for (substep, func) in enumerate(exp_config["simulations"][simulation_name]["pipeline"]["sufs"])
+                            suf = eval(Symbol(func))
+                            new_state = suf(; state=trajectory[end], timestep=timestep, substep=substep, params=params, signal=final_signal)
+                            push!(trajectory, new_state)
                         end
                     end
                 end
                 final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
-                # CSV.write("results_$(simulation_name)_run$(n_run).csv", data)
             end
-            println(final_data)
+            if "table" in exp_config["simulations"][simulation_name]["output"]
+                foreach(trajectory_df -> pretty_table(trajectory_df), final_data)
+            end
+            if "csv" in exp_config["simulations"][simulation_name]["output"]
+                foreach(trajectory_df -> CSV.write("results_$(simulation_name)_run$(n_run)_paramsweep$(p_order)_statesweep$(s_order).csv", 
+                                                   trajectory_df), final_data)
+            end
+            if "json" in exp_config["simulations"][simulation_name]["output"]
+                foreach(trajectory_df -> open("results_$(simulation_name)_run$(n_run)_paramsweep$(p_order)_statesweep$(s_order).json", "w") 
+                                              do io write(io, objecttable(trajectory_df)) end, final_data)
+            end
         end
     end
 end
