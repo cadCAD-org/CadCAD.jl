@@ -1,0 +1,25 @@
+name = "cadCAD"
+
+[install]
+completion = false
+quiet = false
+optimize = 2
+
+[sysimg]
+incremental = false
+filter_stdlibs = true
+
+[sysimg.precompile]
+execution_file = ["deps/precompile.jl"]
+
+[application]
+incremental = false
+filter_stdlibs = true
+
+[application.precompile]
+execution_file = ["deps/precompile.jl"]
+
+[download]
+host = "github.com"
+user = "cadCAD-org"
+repo = "cadCAD.jl"

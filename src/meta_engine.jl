@@ -1,3 +1,5 @@
+module MetaEngine
+
 export generate_state_type, State
 
 function generate_state_type(initial_conditions::NamedTuple)
@@ -33,4 +35,6 @@ function generate_state_signature(initial_conditions::NamedTuple)
     end
 
     return state_signature
+end
+
 end
