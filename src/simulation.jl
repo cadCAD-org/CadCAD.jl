@@ -7,9 +7,9 @@ include("meta_engine.jl")
 import Base.Iterators
 using CSV, DataFrames, StructArrays, PrettyTables, JSONTables
 using Base.Threads, Logging, Comonicon, ProgressLogging
-using .MetaEngine
+using .MetaEngine, cadCAD
 
-function run_simulation(exp_config::Dict)
+function run_simulation(exp_config::Dict, simulation_name::String)
     # create the configurations from system model
     # sets of configurations
     params = eval(Symbol(exp_config["simulations"][simulation_name]["params"]))
@@ -17,24 +17,24 @@ function run_simulation(exp_config::Dict)
     sweep_strategy = exp_config["simulations"][simulation_name]["sweep"]
 
     if max_param_length(params) > 1 && sweep_strategy == "cartesian"
-        println("Using a cartesian sweep of the parameters...")
+        @info "Using a cartesian sweep of the parameters..."
         params_set = Iterators.product(params...)
     elseif max_param_length(params) > 1
-        println("Using a simple sweep of the parameters...")
+        @info "Using a simple sweep of the parameters..."
         params_set = generate_job(exp_matrix(params))
     else
-        println("No sweep of the parameters...")
+        @info "No sweep of the parameters..."
         params_set = (params,)
     end
 
     if max_param_length(init_conditions) > 1 && sweep_strategy == "cartesian"
-        println("Using a cartesian sweep of the state...")
+        @info "Using a cartesian sweep of the state..."
         state_set = Iterators.product(init_conditions...)
     elseif max_param_length(init_conditions) > 1
-        println("Using a simple sweep of the state...")
+        @info "Using a simple sweep of the state..."
         state_set = generate_job(exp_matrix(init_conditions))
     else
-        println("No sweep of the state...")
+        @info "No sweep of the state..."
         state_set = (init_conditions,)
     end
 
@@ -46,7 +46,7 @@ function run_simulation(exp_config::Dict)
             for n_run = 1:exp_config["simulations"][simulation_name]["n_runs"]
                 trajectory = StructArray{State}(undef, 1)
                 trajectory[1] = init_state
-                @progress "Run $n_run:" for timestep in 1:exp_config["simulations"][simulation_name]["timesteps"]
+                @progress "Run $n_run:" for timestep = 1:exp_config["simulations"][simulation_name]["timesteps"]
                     signal_vec = Vector{NamedTuple}(undef, 0)
                     # Policies application
                     # Lock the signal_vec?
@@ -54,13 +54,13 @@ function run_simulation(exp_config::Dict)
                     if nthreads() > 1
                         @threads for func in exp_config["simulations"][simulation_name]["pipeline"]["policies"]
                             policy = eval(Symbol(func))
-                            push!(signal_vec, policy(; state=trajectory[end], params=params))
+                            push!(signal_vec, policy(; state = trajectory[end], params = params))
                         end
                     else
                         for func in exp_config["simulations"][simulation_name]["pipeline"]["policies"]
                             policy = eval(Symbol(func))
                             dump(policy)
-                            push!(signal_vec, policy(; state=trajectory[end], params=params))
+                            push!(signal_vec, policy(; state = trajectory[end], params = params))
                         end
                     end
 
@@ -73,29 +73,30 @@ function run_simulation(exp_config::Dict)
                     if nthreads() > 1
                         @threads for (substep, func) in enumerate(exp_config["simulations"][simulation_name]["pipeline"]["sufs"])
                             suf = eval(Symbol(func))
-                            new_state = suf(; state=trajectory[end], timestep=timestep, substep=substep, params=params, signal=final_signal)
+                            new_state = suf(; state = trajectory[end], timestep = timestep, substep = substep, params = params, signal = final_signal)
                             push!(trajectory, new_state)
                         end
                     else
                         for (substep, func) in enumerate(exp_config["simulations"][simulation_name]["pipeline"]["sufs"])
                             suf = eval(Symbol(func))
-                            new_state = suf(; state=trajectory[end], timestep=timestep, substep=substep, params=params, signal=final_signal)
+                            new_state = suf(; state = trajectory[end], timestep = timestep, substep = substep, params = params, signal = final_signal)
                             push!(trajectory, new_state)
                         end
                     end
                 end
-                final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols=false)
+                final_data[n_run] = DataFrame(StructArrays.components(trajectory), copycols = false)
             end
             if "table" in exp_config["simulations"][simulation_name]["output"]
                 foreach(trajectory_df -> pretty_table(trajectory_df), final_data)
             end
             if "csv" in exp_config["simulations"][simulation_name]["output"]
                 foreach(trajectory_df -> CSV.write("results_$(simulation_name)_run$(n_run)_paramsweep$(p_order)_statesweep$(s_order).csv",
-                                                   trajectory_df), final_data)
+                        trajectory_df), final_data)
             end
             if "json" in exp_config["simulations"][simulation_name]["output"]
-                foreach(trajectory_df -> open("results_$(simulation_name)_run$(n_run)_paramsweep$(p_order)_statesweep$(s_order).json", "w")
-                                              do io write(io, objecttable(trajectory_df)) end, final_data)
+                foreach(trajectory_df -> open("results_$(simulation_name)_run$(n_run)_paramsweep$(p_order)_statesweep$(s_order).json", "w") do io
+                        write(io, objecttable(trajectory_df))
+                    end, final_data)
             end
         end
     end
@@ -143,7 +144,7 @@ function max_param_length(params::NamedTuple)
 end
 
 function generate_job(experiment_matrix::Matrix)
-    return (view(experiment_matrix, :, i) for i in 1:size(experiment_matrix, 2))
+    return (view(experiment_matrix, :, i) for i = 1:size(experiment_matrix, 2))
 end
 
 end

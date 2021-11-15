@@ -7,7 +7,7 @@ import TOML
 using Base.Threads, Base.Libc, Logging, Comonicon, TerminalLoggers
 using .Simulation, .MetaEngine
 
-const old_logger = global_logger(TerminalLogger(right_justify=120))
+const old_logger = global_logger(TerminalLogger(right_justify = 120))
 
 """
 cadCAD CLI v0.1.0
@@ -56,7 +56,7 @@ cadCAD CLI v0.1.0
     generate_state_type(random_init_condition)
 
     println()
-    @info "The following State type was generated and is available in the current scope:"
+    @info "The following State type was generated:"
     dump(State)
     println()
 
@@ -64,9 +64,11 @@ cadCAD CLI v0.1.0
         # TODO: Implement the inclusion of Python functions from system models here
         include(exp_config["simulations"]["functions"])
     catch err
-        @error "Inclusion of the system model's functions failed with the following error: " err
+        @error "Inclusion of the system model's functions failed with the following error:" err
         exit(1)
     end
+
+    eval(export_sys_model_symbols())
 
     n_threads = nthreads()
     @info "Running cadCAD.jl with $n_threads thread(s)."
@@ -76,7 +78,7 @@ cadCAD CLI v0.1.0
             continue
         elseif exp_config["simulations"][simulation_name]["enabled"]
             @info "Running simulation $simulation_name..."
-            # run_simulation(exp_config)
+            run_simulation(exp_config, simulation_name)
         else
             @info "Skipping simulation $simulation_name because it was disabled."
         end
@@ -97,6 +99,42 @@ function exit_on_escalation()
     else
         @warn "Do not run cadCAD as a privileged process. Currently, there is no checking of that on your system."
     end
+end
+
+function export_sys_model_symbols()
+    forbidden_list = [:CASTED_COMMANDS, :MetaEngine, :Simulation,
+        :command_main, :comonicon_install, :comonicon_install_path,
+        :exit_on_escalation, :export_sys_model_symbols, :julia_main, :main, :old_logger]
+
+    exclusion_list = []
+    export_list = []
+    resulting_list = [:(export State)]
+
+    for name in Base.names(cadCAD, all = true)
+        if !(name in forbidden_list)
+            push!(export_list, :(export $(name)))
+        end
+    end
+
+    for name in Base.names(cadCAD, all = false, imported = true)
+        push!(exclusion_list, :(export $(name)))
+    end
+
+    for name in Base.names(Main.Base, all = false, imported = true)
+        push!(exclusion_list, :(export $(name)))
+    end
+
+    for name in Base.names(Main.Core, all = false, imported = true)
+        push!(exclusion_list, :(export $(name)))
+    end
+
+    for expression in export_list
+        if !(expression in exclusion_list || expression == :(export include) || '#' in string(expression))
+            push!(resulting_list, :($(expression)))
+        end
+    end
+
+    return Expr(:block, resulting_list...)
 end
 
 end

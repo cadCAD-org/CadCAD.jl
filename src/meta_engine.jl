@@ -21,7 +21,7 @@ function state_factory(initial_conditions::NamedTuple)
                 new($(fields...), timestep::Int64, substep::Int64)
             end
 
-            State(;$(fields...), timestep::Int64=1, substep::Int64=1) = State($(fields...), timestep::Int64, substep::Int64)
+            State(; $(fields...), timestep::Int64 = 1, substep::Int64 = 1) = State($(fields...), timestep::Int64 = 1, substep::Int64 = 1)
         end
     end
 end
