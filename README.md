@@ -2,6 +2,8 @@
 
 This Work in Progress cadCAD implementation in Julia uses a Meta Engine approach. This represents a development initiative for a high performance engine for experienced modelers to run large experiments.
 
+A distinguishing feature of the Julia implementation is the focus on ease of integration of domain-specific packages for scientific computing into spaces.
+
 ## Building
 
 cadCAD.jl is a standallone CLI app, so it needs to be compiled to be used. To do so:
