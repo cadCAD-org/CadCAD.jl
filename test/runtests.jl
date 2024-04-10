@@ -1,6 +1,6 @@
 using cadCAD
 using Test
 
-@testset "Simulation Test" begin
-    # Tests here
+@testset "cadCAD.jl" begin
+    # Write your tests here.
 end

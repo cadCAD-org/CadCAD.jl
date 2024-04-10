@@ -2,12 +2,12 @@ module Simulation
 
 export run_simulation
 
-include("meta_engine.jl")
+include("spaces.jl")
 
 import Base.Iterators
 using CSV, DataFrames, StructArrays, PrettyTables, JSONTables
 using Base.Threads, Logging, Comonicon, ProgressLogging
-using .MetaEngine, cadCAD
+using .Spaces, cadCAD
 
 function run_simulation(exp_config::Dict, simulation_name::String)
     # create the configurations from system model

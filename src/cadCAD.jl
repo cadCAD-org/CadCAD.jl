@@ -1,20 +1,35 @@
 module cadCAD
 
-include("meta_engine.jl")
-include("simulation.jl")
+include("spaces.jl")
+
+# using .Spaces
+
+# @space begin
+#     myname::String
+#     age::Int64
+# end
+
+# #println(fieldnames(State))
+
+# A = @NamedTuple begin
+#     a::Float64
+#     b::String
+# end
+# println(fieldnames(A))
 
 import TOML
+
 using Base.Threads, Base.Libc, Logging, Comonicon, TerminalLoggers
 using .Simulation, .MetaEngine
 
-const old_logger = global_logger(TerminalLogger(right_justify = 120))
+const old_logger = global_logger(TerminalLogger(right_justify=120))
 
 """
-cadCAD CLI v0.1.0
+cadCAD.jl v0.1.0
 
 # Arguments
 
-- `toml_path`: path to the experiment TOML
+- `toml_path`: path to the experiment TOML # Should be optional
 """
 @main function main(toml_path)
     println(raw"""
@@ -28,6 +43,7 @@ cadCAD CLI v0.1.0
 
     exit_on_escalation()
 
+    # TODO: 
     if !@isdefined toml_path
         @error "A TOML path was not given."
         exit(1)
@@ -110,21 +126,21 @@ function export_sys_model_symbols()
     export_list = []
     resulting_list = [:(export State)]
 
-    for name in Base.names(cadCAD, all = true)
+    for name in Base.names(cadCAD, all=true)
         if !(name in forbidden_list)
             push!(export_list, :(export $(name)))
         end
     end
 
-    for name in Base.names(cadCAD, all = false, imported = true)
+    for name in Base.names(cadCAD, all=false, imported=true)
         push!(exclusion_list, :(export $(name)))
     end
 
-    for name in Base.names(Main.Base, all = false, imported = true)
+    for name in Base.names(Main.Base, all=false, imported=true)
         push!(exclusion_list, :(export $(name)))
     end
 
-    for name in Base.names(Main.Core, all = false, imported = true)
+    for name in Base.names(Main.Core, all=false, imported=true)
         push!(exclusion_list, :(export $(name)))
     end
 

@@ -1,31 +1,13 @@
 name = "cadCAD"
-uuid = "9af61dc1-ce33-4536-883d-c9e16d7e87d5"
+uuid = "56c374c5-0231-4cc5-a8a5-dfd13506b270"
 authors = ["Emanuel Lima <emanuel@block.science>"]
 version = "0.1.0"
 
-[deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-Comonicon = "863f3e99-da2a-4334-8734-de3dacbe5542"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
-JSONTables = "b9914132-a727-11e9-1322-f18e41205b0b"
-Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-PrettyTables = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
-ProgressLogging = "33c8b6b6-d38a-422a-b730-caa89a2f386c"
-StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-TerminalLoggers = "5d786b92-1e48-4d6f-9151-6b4477ca9bed"
-
 [compat]
-CSV = ">= 0.9"
-Comonicon = ">= 0.11"
-DataFrames = ">= 1.2"
-JSONTables = ">= 1"
-PrettyTables = ">= 1.2"
-StructArrays = ">= 0.6"
-julia = ">= 1.6"
+julia = "1.10.0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

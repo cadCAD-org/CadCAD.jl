@@ -1,15 +1,10 @@
-# cadCAD.jl
+# cadCAD
 
-This Work in Progress cadCAD implementation in Julia uses a Meta Engine approach. This represents a development initiative for a high performance engine for experienced modelers to run large experiments.
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://cadCAD-org.github.io/cadCAD.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://cadCAD-org.github.io/cadCAD.jl/dev/)
+[![Build Status](https://github.com/cadCAD-org/cadCAD.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/cadCAD-org/cadCAD.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Coverage](https://codecov.io/gh/cadCAD-org/cadCAD.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/cadCAD-org/cadCAD.jl)
 
-A distinguishing feature of the Julia implementation is the focus on ease of integration of domain-specific packages for scientific computing into spaces.
+## Citing
 
-## Building
-
-cadCAD.jl is a standallone CLI app, so it needs to be compiled to be used. To do so:
-
-1. Install the latest stable release of [Julia](https://julialang.org/downloads/);
-2. Clone this repository;
-3. Do, from the root of the repository: `julia --project deps/build.jl app`
-
-This will create a `build` folder that contains a `cadCAD` folder that is the compiled app. You can `tar` the folder to distriute the app or just relocate it anywhere on your system. The `cadCAD` executable is in the `build/cadCAD/bin` folder.
+See [`CITATION.bib`](CITATION.bib) for the relevant reference(s).
