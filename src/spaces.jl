@@ -1,33 +1,39 @@
 module Spaces
 
-export @space
+export generate_space_type
 
-macro space(ex)
-    Meta.isexpr(ex, :block) || throw(ArgumentError("@space expects a begin...end block"))
-    decls = filter(e -> !(e isa LineNumberNode), ex.args)
-    all(e -> Meta.isexpr(e, :(::)), decls) || throw(ArgumentError("@space must contain a sequence of name::type expressions"))
-    vars = [QuoteNode(e isa Symbol ? e : e.args[1]) for e in decls]
-    println(vars)
-    types = [e isa Symbol ? :Any : e.args[2] for e in decls]
-    println(types)
-    space_dims = ""
-    for (var, type) in zip(vars, types)
-        space_dims *= "$var::$type "
-    end
-    println(split(space_dims))
-    println([Meta.parse(x) for x in split(space_dims)])
-    space_quote = quote
-        struct State
-            $(split(space_dims)...)
-        end
-    end
-    println(space_quote)
-    eval(space_quote)
+function generate_space_type(initial_conditions::NamedTuple, name::String)
+    eval(space_factory(initial_conditions, name))
 end
 
-macro space(ex)
+function space_factory(initial_conditions::NamedTuple, space::String)
+    state_signature = generate_state_signature(initial_conditions)
 
+    fields = map(x -> Meta.parse(x), split(state_signature))
 
+    sspace = Symbol(space)
+
+    return quote
+        struct $sspace
+            $(fields...)
+
+            function $sspace($(fields...),)
+                new($(fields...),)
+            end
+
+            $sspace(; $(fields...),) = $sspace($(fields...),)
+        end
+    end
+end
+
+function generate_state_signature(initial_conditions::NamedTuple)
+    state_signature = ""
+
+    for (variable, value) in pairs(initial_conditions)
+        state_signature *= "$variable::$value "
+    end
+
+    return state_signature
 end
 
 end
