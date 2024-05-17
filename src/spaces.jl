@@ -2,9 +2,9 @@ module Spaces
 
 export generate_space_type, dimensions, inspect, name, isempty, isequivalent, EmptySpace,
     issubspace, isdisjoint, space_add, space_intersect, space_diff, space_complement,
-    add, +, RealSpace, IntegerSpace, BitSpace
+    unroll_schema, cartesian, power, add, +, *, ^, RealSpace, IntegerSpace, BitSpace
 
-import Base: +
+import Base: +, *, ^
 
 function generate_space_type(schema::NamedTuple, name::String, io::IO=stdout)
     state_signature = generate_space_signature(schema)
@@ -67,6 +67,18 @@ function dimensions(space::DataType)
     return Dict(zip(fieldnames(space), fieldtypes(space)))
 end
 
+function unroll_schema(space::DataType)
+    dims = dimensions(space)
+
+    for (key, value) in dims.items()
+        if typeof(value) <: DataType
+            dims[key] = unroll_schema(value)
+        end
+    end
+
+    return dims
+end
+
 function pprint_dims(dims::Dict, pre=1)
     todo = Vector{Tuple}()
 
@@ -124,6 +136,24 @@ end
 
 function space_add(space1::DataType, space2::DataType)
     return generate_space_type(merge(dimensions(space1), dimensions(space2)), "U_$(name(space1))_$(name(space2))")
+end
+
+function *(space1::DataType, space2::DataType)
+    return cartesian(space1, space2)
+end
+
+function cartesian(space1::DataType, space2::DataType)
+    name1 = name(space1)
+    name2 = name(space2)
+    return generate_space_type((name1=space1, name2=space2), "$(name(space1))x$(name(space2))")
+end
+
+function ^(space::DataType, n::Int)
+    return power(space, n)
+end
+
+function power(space::DataType, n::Int)
+    return generate_space_type((name(space) => space for _ in 1:n), "$(name(space))^$n")
 end
 
 function space_intersect(space1::DataType, space2::DataType)
