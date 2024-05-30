@@ -2,11 +2,13 @@ module Spaces
 
 export generate_space_type, dimensions, inspect, name, isempty, isequivalent, EmptySpace,
     issubspace, isdisjoint, space_add, space_intersect, space_diff, space_complement,
-    unroll_schema, cartesian, power, add, +, *, ^, RealSpace, IntegerSpace, BitSpace
+    unroll_schema, cartesian, power, add, +, *, ^, RealSpace, IntegerSpace, BitSpace, Space
 
 import Base: +, *, ^
 
-function generate_space_type(schema::NamedTuple, name::String, io::IO=stdout)
+abstract type Space end
+
+function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
@@ -17,7 +19,7 @@ function generate_space_type(schema::NamedTuple, name::String, io::IO=stdout)
     end
 end
 
-function generate_space_type(schema::Dict{Symbol,DataType}, name::String, io::IO=stdout)
+function generate_space_type(schema::Dict{Symbol,DataType}, name::String, io::IO=stderr)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
@@ -38,7 +40,7 @@ function space_factory(state_signature::String, space_name::String)
     space = Symbol(space_name)
 
     return quote
-        struct $space
+        struct $space <: Space
             $(fields...)
 
             function $space($(fields...),)
@@ -63,11 +65,11 @@ function generate_space_signature(schema::Union{NamedTuple,Dict})
     return state_signature
 end
 
-function dimensions(space::DataType)
+function dimensions(space::Space)
     return Dict(zip(fieldnames(space), fieldtypes(space)))
 end
 
-function unroll_schema(space::DataType)
+function unroll_schema(space::Space)
     dims = dimensions(space)
 
     for (key, value) in dims.items()
@@ -97,70 +99,70 @@ function pprint_dims(dims::Dict, pre=1)
     end
 end
 
-function inspect(space::DataType)
+function inspect(space::Space)
     show(space)
 end
 
-function show(space::DataType, io::IO=stdout)
+function show(space::Space, io::IO=stderr)
     println(io, "Space $(name(space)) has dimensions: ")
     pprint_dims(dimensions(space))
 end
 
-function name(space::DataType)
+function name(space::Space)::String
     return string(nameof(space))
 end
 
-function isempty(space::DataType)
+function isempty(space::Space)
     return fieldtypes(space) === ()
 end
 
-function isequivalent(space1::DataType, space2::DataType)
+function isequivalent(space1::Space, space2::Space)
     return fieldtypes(space1) === fieldtypes(space2)
 end
 
-function issubspace(space1::DataType, space2::DataType)
+function issubspace(space1::Space, space2::Space)
     return fieldtypes(space1) ⊆ fieldtypes(space2)
 end
 
-function isdisjoint(space1::DataType, space2::DataType)
+function isdisjoint(space1::Space, space2::Space)
     return fieldtypes(space1) ∩ fieldtypes(space2) == ()
 end
 
-function add(spaces::DataType...)
+function add(spaces::Space...)
     reduce(+, spaces)
 end
 
-function +(space1::DataType, space2::DataType)
+function +(space1::Space, space2::Space)
     return space_add(space1, space2)
 end
 
-function space_add(space1::DataType, space2::DataType)
+function space_add(space1::Space, space2::Space)
     return generate_space_type(merge(dimensions(space1), dimensions(space2)), "U_$(name(space1))_$(name(space2))")
 end
 
-function *(space1::DataType, space2::DataType)
+function *(space1::Space, space2::Space)
     return cartesian(space1, space2)
 end
 
-function cartesian(space1::DataType, space2::DataType)
+function cartesian(space1::Space, space2::Space)
     name1 = name(space1)
     name2 = name(space2)
     return generate_space_type((name1=space1, name2=space2), "$(name(space1))x$(name(space2))")
 end
 
-function ^(space::DataType, n::Int)
+function ^(space::Space, n::Int)
     return power(space, n)
 end
 
-function power(space::DataType, n::Int)
+function power(space::Space, n::Int)
     return generate_space_type((name(space) => space for _ in 1:n), "$(name(space))^$n")
 end
 
-function space_intersect(space1::DataType, space2::DataType)
+function space_intersect(space1::Space, space2::Space)
     return generate_space_type(intersect(dimensions(space1), dimensions(space2)), "I_$(name(space1))_$(name(space2))")
 end
 
-function space_diff(space1::DataType, space2::DataType)
+function space_diff(space1::Space, space2::Space)
     return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "D_$(name(space1))_$(name(space2))")
 end
 
