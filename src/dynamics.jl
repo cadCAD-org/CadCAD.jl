@@ -5,6 +5,12 @@
 
 module Dynamics
 
+include("spaces.jl")
+
+import .Spaces: inspect
+
+export domain, codomain, iscomposable, inspect
+
 function domain(block::T) where {T<:Function}
     return Base.arg_decl_parts(first(methods(block)))[2][2:end]
 end
@@ -17,6 +23,10 @@ end
 
 function iscomposable(block1::T, block2::T) where {T<:Function}
     return codomain(block1) == domain(block2)
+end
+
+function inspect(block::T) where {T<:Function}
+    return methods(block).ms[1]
 end
 
 end
