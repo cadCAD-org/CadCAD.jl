@@ -1,10 +1,10 @@
 module Spaces
 
-export generate_space_type, dimensions, inspect_space, name, isempty, isequivalent, EmptySpace,
-    issubspace, isdisjoint, space_add, space_intersect, space_diff, space_complement,
-    unroll_schema, cartesian, power, add, +, *, ^, RealSpace, IntegerSpace, BitSpace, Space
+export generate_space_type, dimensions, inspect_space, name, is_empty, is_equivalent, EmptySpace,
+    is_subspace, is_disjoint, space_add, space_intersect, space_diff, RealSpace, IntegerSpace, BitSpace,
+    unroll_schema, cartesian, power, add, +, *, ^, Space
 
-import Base: +, *, ^
+import Base: +, *, ^, ==
 
 abstract type Space end
 
@@ -50,8 +50,6 @@ function space_factory(state_signature::String, space_name::String)
             function $space($(fields...),)
                 new($(fields...),)
             end
-
-            #$space(; $(fields...),) = $space($(fields...),)
         end
     end
 end
@@ -73,16 +71,21 @@ function dimensions(space::Type{T}) where {T<:Space}
     return Dict(zip(fieldnames(space), fieldtypes(space)))
 end
 
-function unroll_schema(space::Type{T}) where {T<:Space}
+function gen_unrolled_schema(space::Type{T}) where {T<:Space}
     dims = dimensions(space)
-
-    for (key, value) in dims.items()
-        if typeof(value) <: DataType
-            dims[key] = unroll_schema(value)
+    new_dict = Dict()
+    for (key, value) in dims
+        if value <: Space
+            new_dict[key] = gen_unrolled_schema(value)
+        else
+            new_dict[key] = value
         end
     end
+    return new_dict
+end
 
-    return dims
+function unroll_schema(space::Type{T}) where {T<:Space}
+    pprint_dims(gen_unrolled_schema(space))
 end
 
 function pprint_dims(dims::Dict, pre=1)
@@ -116,19 +119,23 @@ function name(space::Type{T})::String where {T<:Space}
     return string(nameof(space))
 end
 
-function isempty(space::Type{T}) where {T<:Space}
-    return fieldtypes(space) === ()
+function is_empty(space::Type{T}) where {T<:Space}
+    return fieldtypes(space) == ()
 end
 
-function isequivalent(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return fieldtypes(space1) === fieldtypes(space2)
+function ==(space1::Type{T}, space2::Type{T}) where {T<:Space}
+    return is_equivalent(space1, space2)
 end
 
-function issubspace(space1::Type{T}, space2::Type{T}) where {T<:Space}
+function is_equivalent(space1::Type{T}, space2::Type{T}) where {T<:Space}
+    return fieldtypes(space1) == fieldtypes(space2)
+end
+
+function is_subspace(space1::Type{T}, space2::Type{T}) where {T<:Space}
     return fieldtypes(space1) ⊆ fieldtypes(space2)
 end
 
-function isdisjoint(space1::Type{T}, space2::Type{T}) where {T<:Space}
+function is_disjoint(space1::Type{T}, space2::Type{T}) where {T<:Space}
     return fieldtypes(space1) ∩ fieldtypes(space2) == ()
 end
 
