@@ -1,32 +1,29 @@
 # Blocks are regular Julia functions with the following structure and added API:
-# function myblock(dom1::RealSpace, dom2::IntegerSpace)::NamedTuple{(:codom1, :codom2), Tuple{IntegerSpace, IntegerSpace}}
+# function myblock(dom1::RealSpace, dom2::IntegerSpace, codomain::SomeCompositeSpace)
 #     ...
 # end
 
 module Dynamics
 
-include("spaces.jl")
-
-import .Spaces: inspect
-
-export domain, codomain, iscomposable, inspect
+export domain, codomain, iscomposable, inspect_blk
 
 function domain(block::T) where {T<:Function}
-    return Base.arg_decl_parts(first(methods(block)))[2][2:end]
+    return delete!(type_dict(block), "codomain")
 end
 
-# methods(func).ms[1].sig.parameters[2:end] to get domain as types
-# return_types may be brittle
 function codomain(block::T) where {T<:Function}
-    return Base.return_types(block, methods(block).ms[1].sig.parameters[2:end])[1]
+    return Dict("codomain" => type_dict(block)["codomain"])
 end
 
-function iscomposable(block1::T, block2::T) where {T<:Function}
-    return codomain(block1) == domain(block2)
-end
-
-function inspect(block::T) where {T<:Function}
+function inspect_blk(block::T) where {T<:Function}
     return methods(block).ms[1]
+end
+
+function type_dict(block::T) where {T<:Function}
+    str_types = Base.arg_decl_parts(first(methods(block)))[2]
+    svec_types = methods(block).ms[1].sig.parameters
+    result = Dict(domain_name[1] => type_obj for (domain_name, type_obj) in zip(str_types, svec_types))
+    return delete!(result, "")
 end
 
 end

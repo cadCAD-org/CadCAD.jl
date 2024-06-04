@@ -1,6 +1,6 @@
 module Spaces
 
-export generate_space_type, dimensions, inspect, name, isempty, isequivalent, EmptySpace,
+export generate_space_type, dimensions, inspect_space, name, isempty, isequivalent, EmptySpace,
     issubspace, isdisjoint, space_add, space_intersect, space_diff, space_complement,
     unroll_schema, cartesian, power, add, +, *, ^, RealSpace, IntegerSpace, BitSpace, Space
 
@@ -8,25 +8,29 @@ import Base: +, *, ^
 
 abstract type Space end
 
-function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr)
+function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr, debug=false)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
         error("Invalid schema")
     else
         eval(space_factory(state_signature, name))
-        println(io, "Generated space $name")
+        if debug
+            println(io, "Generated space $name")
+        end
     end
 end
 
-function generate_space_type(schema::Dict{Symbol,DataType}, name::String, io::IO=stderr)
+function generate_space_type(schema::Dict{Symbol,DataType}, name::String, io::IO=stderr, debug=false)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
         error("Invalid schema")
     else
         eval(space_factory(state_signature, name))
-        println(io, "Generated space $name")
+        if debug
+            println(io, "Generated space $name")
+        end
     end
 end
 
@@ -47,7 +51,7 @@ function space_factory(state_signature::String, space_name::String)
                 new($(fields...),)
             end
 
-            $space(; $(fields...),) = $space($(fields...),)
+            #$space(; $(fields...),) = $space($(fields...),)
         end
     end
 end
@@ -99,7 +103,7 @@ function pprint_dims(dims::Dict, pre=1)
     end
 end
 
-function inspect(space::Type{T}) where {T<:Space}
+function inspect_space(space::Type{T}) where {T<:Space}
     show(space)
 end
 
@@ -166,11 +170,11 @@ function space_diff(space1::Type{T}, space2::Type{T}) where {T<:Space}
     return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "D_$(name(space1))_$(name(space2))")
 end
 
-generate_space_type((real=Float64,), "RealSpace", stderr)
+generate_space_type((real=Float64,), "RealSpace")
 
-generate_space_type((integer=Int128,), "IntegerSpace", stderr)
+generate_space_type((integer=Int128,), "IntegerSpace")
 
-generate_space_type((bit=Bool,), "BitSpace", stderr)
+generate_space_type((bit=Bool,), "BitSpace")
 
 generate_empty_space()
 
