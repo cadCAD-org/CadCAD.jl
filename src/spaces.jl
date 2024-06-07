@@ -4,7 +4,7 @@ export generate_space_type, dimensions, inspect_space, name, is_empty, is_equiva
     is_subspace, is_disjoint, space_add, space_intersect, space_diff, RealSpace, IntegerSpace, BitSpace,
     unroll_schema, cartesian, power, add, +, *, ^, Space
 
-import Base: +, *, ^, ==
+import Base: +, *, ^, ==, ∩, -
 
 abstract type Space end
 
@@ -142,62 +142,78 @@ function name(space::Type{T})::String where {T<:Space}
     return string(nameof(space))
 end
 
-function is_empty(space::Type{T}) where {T<:Space}
-    return fieldtypes(space) == ()
+function is_empty(space::Type{T})::Bool where {T<:Space}
+    return schema_size(space) == 0
 end
 
-function ==(space1::Type{T}, space2::Type{T}) where {T<:Space}
+function ==(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
     return is_equivalent(space1, space2)
 end
 
-function is_equivalent(space1::Type{T}, space2::Type{T}) where {T<:Space}
+function is_equivalent(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
     return fieldtypes(space1) == fieldtypes(space2)
 end
 
-function is_subspace(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return fieldtypes(space1) ⊆ fieldtypes(space2)
+function ⊂(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return is_subspace(space1, space2)
 end
 
-function is_disjoint(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return fieldtypes(space1) ∩ fieldtypes(space2) == ()
+function is_subspace(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
+    return space1 in fieldtypes(space2)
+end
+
+function is_disjoint(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
+    return length(intersect(dimensions(space1), dimensions(space2))) == 0
 end
 
 function add(spaces::Type{T}...) where {T<:Space}
     reduce(+, spaces)
 end
 
-function +(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return space_add(space1, space2)
+function +(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return space_add(space1, space2, "$(name(space1))+$(name(space2))")
 end
 
-function space_add(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return generate_space_type(merge(dimensions(space1), dimensions(space2)), "U_$(name(space1))_$(name(space2))")
+function space_add(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+    return generate_space_type(merge(dimensions(space1), dimensions(space2)), "$name")
 end
 
-function *(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return cartesian(space1, space2)
+function *(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return cartesian(space1, space2, "$(name(space1))x$(name(space2))")
 end
 
-function cartesian(space1::Type{T}, space2::Type{T}) where {T<:Space}
+function cartesian(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
     name1 = name(space1)
     name2 = name(space2)
-    return generate_space_type((name1=space1, name2=space2), "$(name(space1))x$(name(space2))")
+    return generate_space_type((name1=space1, name2=space2), "$name")
 end
 
 function ^(space::Type{T}, n::Int) where {T<:Space}
-    return power(space, n)
+    return power(space, n, "$(name(space))^$n")
 end
 
-function power(space::Type{T}, n::Int) where {T<:Space}
-    return generate_space_type((name(space) => space for _ in 1:n), "$(name(space))^$n")
+function power(space::Type{T}, n::Int, name::String) where {T<:Space}
+    return generate_space_type((name(space) => space for _ in 1:n), "$name")
 end
 
-function space_intersect(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return generate_space_type(intersect(dimensions(space1), dimensions(space2)), "I_$(name(space1))_$(name(space2))")
+function ∩(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return space_intersect(space1, space2, "$(name(space1))∩$(name(space2))")
 end
 
-function space_diff(space1::Type{T}, space2::Type{T}) where {T<:Space}
-    return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "D_$(name(space1))_$(name(space2))")
+function space_intersect(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+    return generate_space_type(intersect(dimensions(space1), dimensions(space2)), "$name")
+end
+
+function -(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return space_diff(space1, space2, "$(name(space1))-$(name(space2))")
+end
+
+function space_diff(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+    return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "$name")
+end
+
+function schema_size(space::Type{T})::UInt where {T<:Space}
+    return fieldcount(space)
 end
 
 generate_space_type((real=Float64,), "RealSpace")
