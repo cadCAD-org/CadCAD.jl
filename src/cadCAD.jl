@@ -17,10 +17,8 @@ include("spaces.jl")
 # end
 # println(fieldnames(A))
 
-using Base.Threads, Base.Libc, Logging, TerminalLoggers
+using Base.Threads, Base.Libc, Logging
 using .Simulation
-
-const old_logger = global_logger(TerminalLogger(right_justify=120))
 
 """
 cadCAD.jl v0.1.0

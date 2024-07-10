@@ -6,9 +6,11 @@ export generate_space_type, dimensions, inspect_space, name, is_empty, is_equiva
 
 import Base: +, *, ^, ==, ∩, -
 
+using Printf
+
 abstract type Space end
 
-macro space(ex)
+#= macro space(ex)
     Meta.isexpr(ex, :block) || throw(ArgumentError("@space expects a begin...end block"))
     decls = filter(e -> !(e isa LineNumberNode), ex.args)
     all(e -> Meta.isexpr(e, :(::)), decls) || throw(ArgumentError("@space must contain a sequence of name::type expressions"))
@@ -29,7 +31,9 @@ macro space(ex)
     end
     println(space_quote)
     eval(space_quote)
-end
+end =#
+
+# Factory methods
 
 function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr, debug=false)
     state_signature = generate_space_signature(schema)
@@ -89,6 +93,8 @@ function generate_space_signature(schema::Union{NamedTuple,Dict})
     end
     return state_signature
 end
+
+# Informational methods
 
 function dimensions(space::Type{T}) where {T<:Space}
     return Dict(zip(fieldnames(space), fieldtypes(space)))
@@ -166,6 +172,16 @@ function is_disjoint(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:
     return length(intersect(dimensions(space1), dimensions(space2))) == 0
 end
 
+function schema_size(space::Type{T})::UInt where {T<:Space}
+    return fieldcount(space)
+end
+
+function dim_intersect(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+    return intersect(dimensions(space1), dimensions(space2))
+end
+
+# Operational methods
+
 function add(spaces::Type{T}...) where {T<:Space}
     reduce(+, spaces)
 end
@@ -175,7 +191,21 @@ function +(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
 end
 
 function space_add(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
-    return generate_space_type(merge(dimensions(space1), dimensions(space2)), "$name")
+    if isempty(dim_intersect(space1, space2))
+        return generate_space_type(merge(dimensions(space1), dimensions(space2)), "$name")
+    end
+
+    new_dims = deepcopy(dimensions(space1))
+    for (key, value) in dimensions(space2)
+        if haskey(new_dims, key)
+            new_key_name::String = @sprintf "%s_from_%s" key nameof(space2)
+            new_key = Symbol(new_key_name)
+            new_dims[new_key] = value
+        else
+            new_dims[key] = value
+        end
+    end
+    return generate_space_type(new_dims, "$name")
 end
 
 function *(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
@@ -212,9 +242,11 @@ function space_diff(space1::Type{T}, space2::Type{J}, name::String) where {T<:Sp
     return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "$name")
 end
 
-function schema_size(space::Type{T})::UInt where {T<:Space}
-    return fieldcount(space)
 end
+
+# Factory calls
+
+using .Spaces
 
 generate_space_type((real=Float64,), "RealSpace")
 
@@ -222,6 +254,4 @@ generate_space_type((integer=Int128,), "IntegerSpace")
 
 generate_space_type((bit=Bool,), "BitSpace")
 
-generate_empty_space()
-
-end
+Spaces.generate_empty_space()
