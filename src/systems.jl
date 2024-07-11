@@ -1,12 +1,12 @@
 module Systems
 
-export run_simulation
+export run
 
 include("spaces.jl")
 
 using .Spaces, StructArrays, StaticArrays
 
-function run_simulation(init_state::T, experiment_params::Dict{String,Int}, pipeline::String) where {T<:Space}
+function run(init_state::T, experiment_params::Dict{String,Int}, pipeline::String) where {T<:Space}
     if !validate(pipeline)
         error("Invalid pipeline")
     else

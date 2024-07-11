@@ -5,7 +5,7 @@
 
 module Dynamics
 
-export domain, codomain, iscomposable, inspect_blk
+export domain, codomain, inspect_blk
 
 function domain(block::T) where {T<:Function}
     return delete!(type_dict(block), "codomain")
