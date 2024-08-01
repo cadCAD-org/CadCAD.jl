@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = cadCAD","category":"page"},{"location":"#cadCAD","page":"Home","title":"cadCAD","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"Documentation for cadCAD.","category":"page"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [cadCAD]","category":"page"},{"location":"#cadCAD.intro-Tuple{}","page":"Home","title":"cadCAD.intro","text":"cadCAD.jl v0.0.1\n\n\n\n\n\n","category":"method"}]
+}
