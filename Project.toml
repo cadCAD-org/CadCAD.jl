@@ -1,15 +1,18 @@
 name = "cadCAD"
 uuid = "56c374c5-0231-4cc5-a8a5-dfd13506b270"
-authors = ["Emanuel Lima <emanuel@block.science>"]
-version = "0.1.0"
+authors = ["Emanuel Lima <emanuel-lima@outlook.com>"]
+version = "0.0.1"
 
 [deps]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [compat]
-julia = "1.10.0"
+StaticArrays = "1.9"
+StructArrays = "0.6"
+julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -1,8 +1,10 @@
 module Spaces
 
-export generate_space_type, dimensions, inspect_space, name, is_empty, is_equivalent, EmptySpace,
-    is_subspace, is_disjoint, space_add, space_intersect, space_diff, RealSpace, IntegerSpace, BitSpace,
-    unroll_schema, cartesian, power, add, +, *, ^, Space
+export generate_space_type, dimensions, inspect_space, name, is_empty, is_equivalent,
+       EmptySpace,
+       is_subspace, is_disjoint, space_add, space_intersect, space_diff, RealSpace,
+       IntegerSpace, BitSpace,
+       unroll_schema, cartesian, power, add, +, *, ^, Space
 
 import Base: +, *, ^, ==, ∩, -
 
@@ -35,7 +37,8 @@ end =#
 
 # Factory methods
 
-function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr, debug=false)
+function generate_space_type(
+        schema::NamedTuple, name::String, io::IO = stderr, debug = false)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
@@ -48,7 +51,8 @@ function generate_space_type(schema::NamedTuple, name::String, io::IO=stderr, de
     end
 end
 
-function generate_space_type(schema::Dict{Symbol,DataType}, name::String, io::IO=stderr, debug=false)
+function generate_space_type(
+        schema::Dict{Symbol, DataType}, name::String, io::IO = stderr, debug = false)
     state_signature = generate_space_signature(schema)
 
     if isnothing(state_signature)
@@ -81,7 +85,7 @@ function space_factory(state_signature::String, space_name::String)
     end
 end
 
-function generate_space_signature(schema::Union{NamedTuple,Dict})
+function generate_space_signature(schema::Union{NamedTuple, Dict})
     state_signature = ""
 
     for (key, value) in pairs(schema)
@@ -96,11 +100,11 @@ end
 
 # Informational methods
 
-function dimensions(space::Type{T}) where {T<:Space}
+function dimensions(space::Type{T}) where {T <: Space}
     return Dict(zip(fieldnames(space), fieldtypes(space)))
 end
 
-function gen_unrolled_schema(space::Type{T}) where {T<:Space}
+function gen_unrolled_schema(space::Type{T}) where {T <: Space}
     dims = dimensions(space)
     new_dict = Dict()
     for (key, value) in dims
@@ -113,11 +117,11 @@ function gen_unrolled_schema(space::Type{T}) where {T<:Space}
     return new_dict
 end
 
-function unroll_schema(space::Type{T}) where {T<:Space}
+function unroll_schema(space::Type{T}) where {T <: Space}
     pprint_dims(gen_unrolled_schema(space))
 end
 
-function pprint_dims(dims::Dict, pre=1)
+function pprint_dims(dims::Dict, pre = 1)
     todo = Vector{Tuple}()
 
     for (key, value) in dims
@@ -135,62 +139,68 @@ function pprint_dims(dims::Dict, pre=1)
     end
 end
 
-function inspect_space(space::Type{T}) where {T<:Space}
+function inspect_space(space::Type{T}) where {T <: Space}
     show(space)
 end
 
-function show(space::Type{T}, io::IO=stderr) where {T<:Space}
+function show(space::Type{T}, io::IO = stderr) where {T <: Space}
     println(io, "Space $(name(space)) has dimensions: ")
     pprint_dims(dimensions(space))
 end
 
-function name(space::Type{T})::String where {T<:Space}
+function name(space::Type{T})::String where {T <: Space}
     return string(nameof(space))
 end
 
-function is_empty(space::Type{T})::Bool where {T<:Space}
+function is_empty(space::Type{T})::Bool where {T <: Space}
     return schema_size(space) == 0
 end
 
-function ==(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function is_shallow(space::Type{T})::Bool where {T <: Space}
+    return all(value -> !(value isa Space), values(dimensions(space)))
+end
+
+function ==(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return is_equivalent(space1, space2)
 end
 
-function is_equivalent(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
+function is_equivalent(
+        space1::Type{T}, space2::Type{J})::Bool where {T <: Space, J <: Space}
     return fieldtypes(space1) == fieldtypes(space2)
 end
 
-function ⊂(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function ⊂(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return is_subspace(space1, space2)
 end
 
-function is_subspace(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
+function is_subspace(space1::Type{T}, space2::Type{J})::Bool where {T <: Space, J <: Space}
     return space1 in fieldtypes(space2)
 end
 
-function is_disjoint(space1::Type{T}, space2::Type{J})::Bool where {T<:Space,J<:Space}
+function is_disjoint(space1::Type{T}, space2::Type{J})::Bool where {T <: Space, J <: Space}
     return length(intersect(dimensions(space1), dimensions(space2))) == 0
 end
 
-function schema_size(space::Type{T})::UInt where {T<:Space}
+function schema_size(space::Type{T})::UInt where {T <: Space}
     return fieldcount(space)
 end
 
-function dim_intersect(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function dim_intersect(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return intersect(dimensions(space1), dimensions(space2))
 end
 
 # Operational methods
 
-function add(spaces::Type{T}...) where {T<:Space}
+function add(spaces::Type{T}...) where {T <: Space}
     reduce(+, spaces)
 end
 
-function +(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function +(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return space_add(space1, space2, "$(name(space1))+$(name(space2))")
 end
 
-function space_add(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+function space_add(
+        space1::Type{T}, space2::Type{J}, name::String) where {T <: Space, J <: Space}
     if isempty(dim_intersect(space1, space2))
         return generate_space_type(merge(dimensions(space1), dimensions(space2)), "$name")
     end
@@ -208,37 +218,40 @@ function space_add(space1::Type{T}, space2::Type{J}, name::String) where {T<:Spa
     return generate_space_type(new_dims, "$name")
 end
 
-function *(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function *(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return cartesian(space1, space2, "$(name(space1))x$(name(space2))")
 end
 
-function cartesian(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+function cartesian(
+        space1::Type{T}, space2::Type{J}, name::String) where {T <: Space, J <: Space}
     name1 = name(space1)
     name2 = name(space2)
-    return generate_space_type((name1=space1, name2=space2), "$name")
+    return generate_space_type((name1 = space1, name2 = space2), "$name")
 end
 
-function ^(space::Type{T}, n::Int) where {T<:Space}
+function ^(space::Type{T}, n::Int) where {T <: Space}
     return power(space, n, "$(name(space))^$n")
 end
 
-function power(space::Type{T}, n::Int, name::String) where {T<:Space}
+function power(space::Type{T}, n::Int, name::String) where {T <: Space}
     return generate_space_type((name(space) => space for _ in 1:n), "$name")
 end
 
-function ∩(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function ∩(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return space_intersect(space1, space2, "$(name(space1))∩$(name(space2))")
 end
 
-function space_intersect(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+function space_intersect(
+        space1::Type{T}, space2::Type{J}, name::String) where {T <: Space, J <: Space}
     return generate_space_type(intersect(dimensions(space1), dimensions(space2)), "$name")
 end
 
-function -(space1::Type{T}, space2::Type{J}) where {T<:Space,J<:Space}
+function -(space1::Type{T}, space2::Type{J}) where {T <: Space, J <: Space}
     return space_diff(space1, space2, "$(name(space1))-$(name(space2))")
 end
 
-function space_diff(space1::Type{T}, space2::Type{J}, name::String) where {T<:Space,J<:Space}
+function space_diff(
+        space1::Type{T}, space2::Type{J}, name::String) where {T <: Space, J <: Space}
     return generate_space_type(setdiff(dimensions(space1), dimensions(space2)), "$name")
 end
 
@@ -248,10 +261,10 @@ end
 
 using .Spaces
 
-generate_space_type((real=Float64,), "RealSpace")
+generate_space_type((real = Float64,), "RealSpace")
 
-generate_space_type((integer=Int128,), "IntegerSpace")
+generate_space_type((integer = Int128,), "IntegerSpace")
 
-generate_space_type((bit=Bool,), "BitSpace")
+generate_space_type((bit = Bool,), "BitSpace")
 
 Spaces.generate_empty_space()

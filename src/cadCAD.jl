@@ -1,29 +1,16 @@
 module cadCAD
 
-include("simulation.jl")
+export run
 
-# using .Spaces
+include("spaces.jl")
 
-# @space begin
-#     myname::String
-#     age::Int64
-# end
-
-# #println(fieldnames(State))
-
-# A = @NamedTuple begin
-#     a::Float64
-#     b::String
-# end
-# println(fieldnames(A))
-
-using Base.Threads, Base.Libc, Logging
-using .Simulation
+using .Spaces
+using Logging, StructArrays, StaticArrays
 
 """
-cadCAD.jl v0.1.0
+cadCAD.jl v0.0.1
 """
-function main()
+function intro()
     println(raw"""
                           _  ____    _    ____    _ _
              ___ __ _  __| |/ ___|  / \  |  _ \  (_) |
@@ -34,18 +21,34 @@ function main()
           """)
 
     @info """
-    \nStarting experiment $(exp_config["title"]) based on $toml_path
-    With system model composed of:
-    $(exp_config["simulations"]["data_structures"]) as the data structures
-    and
-    $(exp_config["simulations"]["functions"]) as the functions
+    \nStarting simultation...\n
     """
-
-    n_threads = nthreads()
-    @info "Running cadCAD.jl with $n_threads thread(s)."
-
-    # TODO: Implement the entrypoint for the simulation
-
 end
 
+function run(init_state::T, experiment_params::Dict{String, Int},
+        pipeline::String) where {T <: Space}
+    intro()
+
+    pipeline_expr = pipeline_compile(pipeline)
+    result_matrix = SVector{experiment_params["n_runs"], StructArray{T <: Space}}
+
+    for _ in 1:experiment_params["n_runs"]
+        current_state = init_state
+        result = StructArray{T <: Space}
+        push!(result, current_state)
+
+        for _ in 1:experiment_params["n_steps"]
+            current_state = eval(Symbol(result[end]) * pipeline_expr)
+            push!(result, current_state)
+        end
+
+        push!(result_matrix, result)
+    end
+
+    return result_matrix
+end
+
+function pipeline_compile(pipeline::String)::Expr
+    return Meta.parse(pipeline)
+end
 end
