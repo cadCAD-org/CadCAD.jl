@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = cadCAD
+CurrentModule = CadCAD
 ```
 
-# cadCAD
+# CadCAD
 
-Documentation for [cadCAD](https://github.com/cadCAD-org/cadCAD.jl).
+Documentation for [CadCAD](https://github.com/cadCAD-org/CadCAD.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [cadCAD]
+Modules = [CadCAD]
 ```

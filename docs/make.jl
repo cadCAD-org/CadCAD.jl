@@ -1,16 +1,16 @@
-using cadCAD
+using CadCAD
 using Documenter
 
-DocMeta.setdocmeta!(cadCAD, :DocTestSetup, :(using cadCAD); recursive = true)
+DocMeta.setdocmeta!(CadCAD, :DocTestSetup, :(using CadCAD); recursive = true)
 
 makedocs(;
-    modules = [cadCAD],
+    modules = [CadCAD],
     authors = "Emanuel Lima <emanuel-lima@outlook.com>",
-    repo = "https://github.com/cadCAD-org/cadCAD.jl/blob/{commit}{path}#{line}",
-    sitename = "cadCAD.jl",
+    repo = "https://github.com/cadCAD-org/CadCAD.jl/blob/{commit}{path}#{line}",
+    sitename = "CadCAD.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
-        canonical = "https://cadCAD-org.github.io/cadCAD.jl",
+        canonical = "https://cadCAD-org.github.io/CadCAD.jl",
         edit_link = "main",
         assets = String[]
     ),
@@ -20,6 +20,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo = "github.com/cadCAD-org/cadCAD.jl",
+    repo = "github.com/cadCAD-org/CadCAD.jl",
     devbranch = "main"
 )

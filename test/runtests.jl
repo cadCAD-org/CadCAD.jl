@@ -1,6 +1,6 @@
-using cadCAD
+using CadCAD
 using Test
 
-@testset "cadCAD.jl" begin
+@testset "CadCAD.jl" begin
     # Write your tests here.
 end
