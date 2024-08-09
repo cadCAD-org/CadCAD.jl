@@ -18,7 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - 'lts'
           - 'nightly'
           - '1.10'
         os:
@@ -65,6 +64,6 @@ jobs:
       - run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using cadCAD
-            DocMeta.setdocmeta!(cadCAD, :DocTestSetup, :(using cadCAD); recursive=true)
-            doctest(cadCAD)'
+            using CadCAD
+            DocMeta.setdocmeta!(CadCAD, :DocTestSetup, :(using CadCAD); recursive=true)
+            doctest(CadCAD)'
