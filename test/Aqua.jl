@@ -5,5 +5,6 @@ using Aqua
 @testset "Aqua.jl" begin
     Aqua.test_all(
         CadCAD;
+        ambiguities = false # ambiguities failing between Base and StructArrays
     )
 end

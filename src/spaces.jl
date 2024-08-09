@@ -191,6 +191,10 @@ end
 
 # Operational methods
 
+function add()
+    error("No spaces to add")
+end
+
 function add(spaces::Type{T}...) where {T <: Space}
     reduce(+, spaces)
 end
