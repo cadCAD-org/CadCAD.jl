@@ -1,10 +1,30 @@
-# cadCAD
+<h1 align="center">
+<img src="docs/assets/logo.jpg" width="300">
+</h1><br>
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://cadCAD-org.github.io/cadCAD.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://cadCAD-org.github.io/cadCAD.jl/dev/)
-[![Build Status](https://github.com/cadCAD-org/cadCAD.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/cadCAD-org/cadCAD.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/cadCAD-org/cadCAD.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/cadCAD-org/cadCAD.jl)
+[![Discord Invite](https://dcbadge.vercel.app/api/server/FP2FGJb4tJ)](https://discord.gg/FP2FGJb4tJ)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg?style=for-the-badge)](https://cadCAD-org.github.io/CadCAD.jl/)
+![Build Status](https://img.shields.io/github/actions/workflow/status/cadCAD-org/CadCAD.jl/CI.yml?branch=main&style=for-the-badge)
+![Codecov](https://img.shields.io/codecov/c/github/cadCAD-org/CadCAD.jl?token=A4I0I8QGD7&style=for-the-badge)
+
+
+Complex Adaptive Dynamics Computer Aided Design (CadCAD) is a language for encoding Generalized Dynamical Systems (GDS) as computer programs. This repository contains the Julia implementation of the software, based on the reference implementation written in [Python](https://github.com/cadCAD-org/cadcad-ri).
+
+## Getting Started
+
+Simply open a Julia REPL and do `]add CadCAD`
+
+## Contributing
+
+To know how you can contribute to this package, see the [`CONTRIBUTING.md`](CONTRIBUTING.md) file.
 
 ## Citing
 
-See [`CITATION.bib`](CITATION.bib) for the relevant reference(s).
+If you use this package in a publication, or simply want to refer to it,  see [`CITATION.bib`](CITATION.bib) for the relevant reference.
+
+<br>
+<br>
+<br>
+
+[![Aqua Static Badge](https://img.shields.io/badge/tested_with-aqua.jl-00FFFF?style=for-the-badge&logo=julia&logoColor=white)](https://github.com/JuliaTesting/Aqua.jl)
+[![Jet Static Badge](https://img.shields.io/badge/tested_with-jet.jl-000080?style=for-the-badge&logo=julia&logoColor=white)](https://github.com/aviatesk/JET.jl)
