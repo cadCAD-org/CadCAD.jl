@@ -7,7 +7,6 @@
 ![Build Status](https://img.shields.io/github/actions/workflow/status/cadCAD-org/CadCAD.jl/CI.yml?branch=main&style=for-the-badge)
 ![Codecov](https://img.shields.io/codecov/c/github/cadCAD-org/CadCAD.jl?token=A4I0I8QGD7&style=for-the-badge)
 
-
 Complex Adaptive Dynamics Computer Aided Design (CadCAD) is a language for encoding Generalized Dynamical Systems (GDS) as computer programs. This repository contains the Julia implementation of the software, based on the reference implementation written in [Python](https://github.com/cadCAD-org/cadcad-ri).
 
 ## Getting Started
@@ -21,10 +20,3 @@ To know how you can contribute to this package, see the [`CONTRIBUTING.md`](CONT
 ## Citing
 
 If you use this package in a publication, or simply want to refer to it,  see [`CITATION.bib`](CITATION.bib) for the relevant reference.
-
-<br>
-<br>
-<br>
-
-[![Aqua Static Badge](https://img.shields.io/badge/tested_with-aqua.jl-00FFFF?style=for-the-badge&logo=julia&logoColor=white)](https://github.com/JuliaTesting/Aqua.jl)
-[![Jet Static Badge](https://img.shields.io/badge/tested_with-jet.jl-000080?style=for-the-badge&logo=julia&logoColor=white)](https://github.com/aviatesk/JET.jl)
