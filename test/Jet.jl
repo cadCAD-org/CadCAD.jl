@@ -1,8 +1,9 @@
 using JET
 
 @testset "JET.jl" begin
-    Aqua.report_package(
+    JET.report_package(
         CadCAD;
+        ignored_modules = (AnyFrameModule(Base),)
     )
 end
 

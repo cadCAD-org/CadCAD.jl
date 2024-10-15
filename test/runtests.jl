@@ -1,6 +1,7 @@
 using CadCAD
 using Test
 
+# TODO: Make Aqua and Jet tests optional
 include("Aqua.jl")
 include("Jet.jl")
 

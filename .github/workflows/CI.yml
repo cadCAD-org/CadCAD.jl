@@ -19,10 +19,11 @@ jobs:
       matrix:
         version:
           - 'nightly'
-          - '1.10'
+          - 'lts'
+          - 'release'
         os:
           - ubuntu-latest
-          - macOS-latest
+          - macos-latest
           - windows-latest
         arch:
           - x64

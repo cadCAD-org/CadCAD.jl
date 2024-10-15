@@ -8,7 +8,7 @@ using .Spaces
 using Logging, StructArrays, StaticArrays
 
 """
-cadCAD.jl v0.0.1
+cadCAD.jl v0.0.2
 """
 function intro()
     println(raw"""
@@ -17,7 +17,7 @@ function intro()
     | |   / _` |/ _` | |     / _ \ | | | | | | |
     | |__| (_| | (_| | |___ / ___ \| |_| | | | |
      \____\__,_|\__,_|\____/_/   \_\____(_)/ |_|
-                                         |__/ v0.0.1
+                                         |__/ v0.0.2
           """)
 
     @info """

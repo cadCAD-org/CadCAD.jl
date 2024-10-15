@@ -1,34 +1,26 @@
 # WiP
-# Create the spaces with a macro
 
-@Space Population begin
+module Example
+
+using CadCAD.Spaces
+
+# Create the spaces as kwdef structs (for now)
+
+@kwdef struct Population <: Point
     prey_population::UInt
     predator_population::UInt
 end
 
-@Space DeltaPopulation begin
+@kwdef struct DeltaPopulation <: Point
     delta_pop::Int
 end
 
-@Space JoinedDelta begin
+@kwdef struct JoinedDelta <: Point
     prey_b_delta::DeltaPopulation
     predator_b_delta::DeltaPopulation
     prey_d_delta::DeltaPopulation
     predator_d_delta::DeltaPopulation
 end
-
-# Or create the spaces with a function
-
-generate_space_type((prey_population = UInt, predator_population = UInt), "Population")
-
-generate_space_type((delta_pop = Int,), "DeltaPopulation")
-
-generate_space_type(
-    (prey_b_delta = DeltaPopulation,
-        predator_b_delta = DeltaPopulation,
-        prey_d_delta = DeltaPopulation,
-        predator_d_delta = DeltaPopulation),
-    "JoinedDelta")
 
 # Set the parameters
 
@@ -37,7 +29,7 @@ params = (
     predator_birth_rate = 0.01,
     predator_death_rate = 1.0,
     prey_death_rate = 0.03,
-    c_prey = 0.1
+    c_prey = 0.1,
     c_predator = 0.01
 )
 
@@ -92,15 +84,17 @@ end
 
 # Set the initial state
 
-initial_conditions = Population(
+initial_conditions = Population(;
     prey_population = 100,
     predator_population = 15
 )
 
 # Set the pipeline
 
-pipeline = "((predator_births | prey_births | predator_deaths | prey_deaths) > join_naturals) > natural_causes > hunt"
+#pipeline = "((predator_births | prey_births | predator_deaths | prey_deaths) > join_naturals) > natural_causes > hunt"
 
 # Run the simulation
 
-trajectory = run(initial_conditions, sim_params, pipeline)
+#trajectory = run(initial_conditions, sim_params, pipeline)
+
+end
