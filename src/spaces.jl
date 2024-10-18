@@ -7,7 +7,7 @@ export dimensions, inspect_space, name, is_empty, is_equivalent,
 
 import Base: +, *, ^, ==, ∩, -
 
-#using Printf
+using Printf
 
 abstract type Point end
 
@@ -36,70 +36,19 @@ end =#
 
 # Factory methods
 
-#function generate_space_type(
-#        schema::NamedTuple, name::String, io::IO = stderr, debug = false)
-#    state_signature = generate_space_signature(schema)
-#
-#    if isnothing(state_signature)
-#        error("Invalid schema")
-#    else
-#        eval(space_factory(state_signature, name))
-#        if debug
-#            println(io, "Generated space $name")
-#        end
-#    end
-#end
-#
-#function generate_space_type(
-#        schema::Dict{Symbol, DataType}, name::String, io::IO = stderr, debug = false)
-#    state_signature = generate_space_signature(schema)
-#
-#    if isnothing(state_signature)
-#        error("Invalid schema")
-#    else
-#        eval(space_factory(state_signature, name))
-#        if debug
-#            println(io, "Generated space $name")
-#        end
-#    end
-#end
-#
-#function generate_empty_space()
-#    eval(space_factory("", "EmptySpace"))
-#end
-#
-#function space_factory(state_signature::String, space_name::String)
-#    fields = map(x -> Meta.parse(x), split(state_signature))
-#
-#    space = Symbol(space_name)
-#
-#    return quote
-#        struct $space <: Space
-#            $(fields...)
-#
-#            function $space($(fields...),)
-#                new($(fields...),)
-#            end
-#        end
-#    end
-#end
-#
-#function generate_space_signature(schema::Union{NamedTuple, Dict})
-#    state_signature = ""
-#
-#    for (key, value) in pairs(schema)
-#        if isa(key, Symbol) && isa(value, DataType)
-#            state_signature *= "$key::$value "
-#        else
-#            return nothing
-#        end
-#    end
-#    return state_signature
-#end
+function generate_space_type(
+        schema::Union{Dict{Symbol, DataType}, NamedTuple}, name::String)
+    state_signature = Meta.parse("@kwdef struct $name  <: Point\n$(join(["$(repr(key))::$(repr(value))" for (key, value) in schema], "\n"))\nend")
+    if isnothing(state_signature)
+        error("Invalid schema")
+    else
+        eval(state_signature)
+    end
+end
 
 # Informational methods
 
-function isspace(space::DataType)::Bool
+function isspace(space::T)::Bool where {T <: DataType}
     return isstructtype(space) && !ismutabletype(space) && !(Any in fieldtypes(space))
 end
 
@@ -195,7 +144,7 @@ function is_shallow(space::DataType)::Bool
     return all(value -> !(value isa Space), values(dimensions(space)))
 end
 
-function ==(space1::DataType, space2::DataType)::Bool
+function ==(space1::T, space2::T)::Bool where {T <: DataType}
     if !isspace(space1) || !isspace(space2)
         error("Spaces were not provided")
     end
@@ -294,10 +243,6 @@ function space_add(
 end
 
 function *(space1::DataType, space2::DataType)
-    if !isspace(space1) || !isspace(space2)
-        error("Spaces were not provided")
-    end
-
     return cartesian(space1, space2, "$(name(space1))x$(name(space2))")
 end
 
@@ -378,6 +323,8 @@ end
 end
 
 # Built-in space types
+
+using .Spaces
 
 struct EmptySpace <: Point end
 

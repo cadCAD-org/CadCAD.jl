@@ -1,11 +1,11 @@
 module CadCAD
 
-export run
+export run_exp
 
 include("spaces.jl")
 
 using .Spaces
-using Logging, StructArrays, StaticArrays
+using Logging, StaticArrays
 
 """
 cadCAD.jl v0.0.2
@@ -25,24 +25,24 @@ function intro()
     """
 end
 
-function run(init_state::T, experiment_params::Dict{String, Int},
-        pipeline::String) where {T <: Space}
+function run_exp(init_state::T, experiment_params::NamedTuple,
+        pipeline::String) where {T <: Point}
     intro()
 
     pipeline_expr = pipeline_compile(pipeline)
-    result_matrix = SVector{experiment_params["n_runs"], StructArray{T <: Space}}
+    result_matrix = SVector{experiment_params.n_runs, Vector{T <: Point}}
 
-    for _ in 1:experiment_params["n_runs"]
+    for i in 1:(experiment_params.n_runs)
         current_state = init_state
-        result = StructArray{T <: Space}
-        push!(result, current_state)
+        result = Vector{T}(undef, experiment_params.n_steps)
+        result[1] = current_state
 
-        for _ in 1:experiment_params["n_steps"]
-            current_state = eval(Symbol(result[end]) * pipeline_expr)
-            push!(result, current_state)
+        for j in 1:(experiment_params.n_steps)
+            current_state = result[end] |> eval(pipeline_expr) # TODO
+            result[j + 1] = current_state
         end
 
-        push!(result_matrix, result)
+        result_matrix[i] = result
     end
 
     return result_matrix

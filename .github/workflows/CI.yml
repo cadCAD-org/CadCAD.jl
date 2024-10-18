@@ -20,7 +20,7 @@ jobs:
         version:
           - 'nightly'
           - 'lts'
-          - 'release'
+          - '1'
         os:
           - ubuntu-latest
           - macos-latest

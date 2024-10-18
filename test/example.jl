@@ -2,7 +2,7 @@
 
 module Example
 
-using CadCAD.Spaces
+using CadCAD: EmptySpace, Point
 
 # Create the spaces as kwdef structs (for now)
 
@@ -43,22 +43,22 @@ sim_params = (
 
 function predator_births(domain::EmptySpace, codomain::DeltaPopulation, params::NamedTuple)
     delta = params.predator_birth_rate * rand(Float64) * params.c_predator
-    codomain.delta_pop = floor(delta)
+    codomain.delta_pop = floor(Int, delta)
 end
 
 function prey_births(domain::EmptySpace, codomain::DeltaPopulation, params::NamedTuple)
-    delta = params.predator_birth_rate * rand(Float64) * params.c_prey
-    codomain.delta_pop = floor(delta)
+    delta = params.prey_birth_rate * rand(Float64) * params.c_prey
+    codomain.delta_pop = floor(Int, delta)
 end
 
 function predator_deaths(domain::EmptySpace, codomain::DeltaPopulation, params::NamedTuple)
     delta = params.predator_death_rate * rand(Float64) * params.c_predator
-    codomain.delta_pop = floor(delta)
+    codomain.delta_pop = floor(Int, delta)
 end
 
 function prey_deaths(domain::EmptySpace, codomain::DeltaPopulation, params::NamedTuple)
     delta = params.prey_death_rate * rand(Float64) * params.c_prey
-    codomain.delta_pop = floor(delta)
+    codomain.delta_pop = floor(Int, delta)
 end
 
 function join_naturals(prey_b::DeltaPopulation, predator_b::DeltaPopulation,
@@ -79,7 +79,7 @@ end
 
 function hunt(initial_pop::Population, codomain::Population)
     codomain.predator_population = initial_pop.predator_population
-    codomain.prey_population = floor(initial_pop.predator_population * 0.95)
+    codomain.prey_population = floor(UInt, initial_pop.prey_population * 0.95)
 end
 
 # Set the initial state
@@ -91,7 +91,7 @@ initial_conditions = Population(;
 
 # Set the pipeline
 
-#pipeline = "((predator_births | prey_births | predator_deaths | prey_deaths) > join_naturals) > natural_causes > hunt"
+pipeline = "((predator_births | prey_births | predator_deaths | prey_deaths) > join_naturals) > natural_causes > hunt"
 
 # Run the simulation
 
