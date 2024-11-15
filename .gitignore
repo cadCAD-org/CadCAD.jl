@@ -4,3 +4,4 @@
 /docs/Manifest.toml
 /docs/build/
 julia-parser.scm
+.DS_store
