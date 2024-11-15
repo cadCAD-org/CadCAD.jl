@@ -2,7 +2,7 @@ module Spaces
 
 export dimensions, inspect_space, name, is_empty, is_equivalent,
        EmptySpace, is_subspace, is_disjoint, space_add, space_intersect,
-       IntegerSpace, BitSpace, space_diff, RealSpace,
+       IntegerSpace, BitSpace, space_diff, RealSpace, is_space,
        unroll_schema, cartesian, power, add, +, *, ^, Point
 
 import Base: +, *, ^, ==, ∩, -
@@ -48,12 +48,12 @@ end
 
 # Informational methods
 
-function isspace(space::T)::Bool where {T <: DataType}
+function is_space(space::T)::Bool where {T <: DataType}
     return isstructtype(space) && !ismutabletype(space) && !(Any in fieldtypes(space))
 end
 
 function dimensions(space::DataType)::Dict{Symbol, DataType}
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -61,7 +61,7 @@ function dimensions(space::DataType)::Dict{Symbol, DataType}
 end
 
 function gen_unrolled_schema(space::DataType)::Dict{Symbol, Union{DataType, Dict}}
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -78,7 +78,7 @@ function gen_unrolled_schema(space::DataType)::Dict{Symbol, Union{DataType, Dict
 end
 
 function unroll_schema(space::DataType)
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -104,7 +104,7 @@ function pprint_dims(dims::Dict, pre = 1)
 end
 
 function inspect_space(space::DataType)
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -112,7 +112,7 @@ function inspect_space(space::DataType)
 end
 
 function show(space::DataType, io::IO = stderr)
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -121,7 +121,7 @@ function show(space::DataType, io::IO = stderr)
 end
 
 function name(space::DataType)::String
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -129,7 +129,7 @@ function name(space::DataType)::String
 end
 
 function is_empty(space::DataType)::Bool
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -137,24 +137,16 @@ function is_empty(space::DataType)::Bool
 end
 
 function is_shallow(space::DataType)::Bool
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
     return all(value -> !(value isa Space), values(dimensions(space)))
 end
 
-function ==(space1::T, space2::T)::Bool where {T <: DataType}
-    if !isspace(space1) || !isspace(space2)
-        error("Spaces were not provided")
-    end
-
-    return is_equivalent(space1, space2)
-end
-
 function is_equivalent(
         space1::DataType, space2::DataType)::Bool
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -162,7 +154,7 @@ function is_equivalent(
 end
 
 function ⊂(space1::DataType, space2::DataType)::Bool
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -170,7 +162,7 @@ function ⊂(space1::DataType, space2::DataType)::Bool
 end
 
 function issubspace(space1::DataType, space2::DataType)::Bool
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -178,7 +170,7 @@ function issubspace(space1::DataType, space2::DataType)::Bool
 end
 
 function isdisjoint(space1::DataType, space2::DataType)::Bool
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -186,7 +178,7 @@ function isdisjoint(space1::DataType, space2::DataType)::Bool
 end
 
 function schema_size(space::DataType)::UInt
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -194,7 +186,7 @@ function schema_size(space::DataType)::UInt
 end
 
 function dim_intersect(space1::DataType, space2::DataType)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -212,7 +204,7 @@ function add(spaces::DataType...)
 end
 
 function +(space1::DataType, space2::DataType)::DataType
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -221,7 +213,7 @@ end
 
 function space_add(
         space1::DataType, space2::DataType, name::String)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -261,7 +253,7 @@ julia> ...
 """
 function cartesian(
         space1::DataType, space2::DataType, name::String)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -271,7 +263,7 @@ function cartesian(
 end
 
 function ^(space::DataType, n::Int)
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -279,7 +271,7 @@ function ^(space::DataType, n::Int)
 end
 
 function power(space::DataType, n::Int, name::String)
-    if !isspace(space)
+    if !is_space(space)
         error("$space is not a space")
     end
 
@@ -287,7 +279,7 @@ function power(space::DataType, n::Int, name::String)
 end
 
 function ∩(space1::DataType, space2::DataType)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -296,7 +288,7 @@ end
 
 function space_intersect(
         space1::DataType, space2::DataType, name::String)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -304,7 +296,7 @@ function space_intersect(
 end
 
 function -(space1::DataType, space2::DataType)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 
@@ -313,7 +305,7 @@ end
 
 function space_diff(
         space1::DataType, space2::DataType, name::String)
-    if !isspace(space1) || !isspace(space2)
+    if !is_space(space1) || !is_space(space2)
         error("Spaces were not provided")
     end
 

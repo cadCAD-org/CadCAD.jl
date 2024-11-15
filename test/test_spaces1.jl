@@ -1,7 +1,6 @@
 module TestSpaces1
 
-
-using CadCAD: Point, isspace, is_equivalent
+using CadCAD: Point, is_space, is_equivalent
 
 @kwdef struct Cartesian <: Point
     x::Float64
@@ -24,8 +23,7 @@ point2 = Cartesian(;
 )
 
 @assert !(point1 == point2)
-@assert isspace(point1)
-@assert is_equivalent(point1, point2)
-
+@assert is_space(Cartesian)
+@assert is_equivalent(Cartesian, Polar)
 
 end
