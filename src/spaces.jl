@@ -3,7 +3,7 @@ module Spaces
 export dimensions, inspect_space, name, is_empty, is_equivalent,
        EmptySpace, is_subspace, is_disjoint, space_add, space_intersect,
        IntegerSpace, BitSpace, space_diff, RealSpace, is_space,
-       unroll_schema, cartesian, power, add, +, *, ^, Point
+       unroll_schema, cartesian, power, add, +, *, ^, Point, is_equivalent_underlying_space
 
 import Base: +, *, ^, ==, ∩, -
 
@@ -151,6 +151,11 @@ function is_equivalent(
     end
 
     return fieldtypes(space1) == fieldtypes(space2)
+end
+
+function is_equivalent_underlying_space(
+    point1::Point, point2::Point)::Bool
+    throw(NotImplementedError("The is_equivalent_underlying_space is not yet implemented"))
 end
 
 function ⊂(space1::DataType, space2::DataType)::Bool
